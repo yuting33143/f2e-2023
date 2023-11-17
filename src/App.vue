@@ -11,7 +11,7 @@ const changeLanguage = value => {
 };
 
 const languages = [
-  { text: '繁體中文', value: 'tw' },
+  { text: '中文', value: 'tw' },
   { text: 'English', value: 'en' }
 ];
 </script>
@@ -20,7 +20,7 @@ const languages = [
   <header>
     <div>
       <nav>
-        <RouterLink to="/">{{ $t('header.home') }}</RouterLink>
+        <RouterLink to="/current">{{ $t('header.current') }}</RouterLink>
         <RouterLink to="/history">{{ $t('header.history') }}</RouterLink>
       </nav>
     </div>

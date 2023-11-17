@@ -1,6 +1,6 @@
 <script setup></script>
 
 <template>
-  <div>hi</div>
+  <div>home</div>
 </template>
 <style lang="scss" scoped></style>

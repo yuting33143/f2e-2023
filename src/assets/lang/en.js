@@ -1,6 +1,6 @@
 export default {
   header: {
-    home: 'Instant Ticketing',
+    current: 'Instant Ticketing',
     history: 'Historical Ticketing Results'
   }
 };

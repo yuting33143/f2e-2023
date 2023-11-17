@@ -1,6 +1,6 @@
 <script setup></script>
 
 <template>
-  <div>history</div>
+  <div>current</div>
 </template>
 <style lang="scss" scoped></style>
