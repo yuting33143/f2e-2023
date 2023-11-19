@@ -1,6 +1,16 @@
 <script setup></script>
 
 <template>
-  <div>current</div>
+  <div class="test">
+    current
+    <div class="content">asd</div>
+  </div>
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.test {
+  display: flex;
+  .content {
+    color: aqua;
+  }
+}
+</style>

@@ -8,6 +8,12 @@ const router = createRouter({
       name: 'home',
       component: async () => import('@/pages/Home/index.vue')
     },
+
+    {
+      path: '/current',
+      name: 'current',
+      component: async () => import('@/pages/Current/index.vue')
+    },
     {
       path: '/history',
       name: 'history',
