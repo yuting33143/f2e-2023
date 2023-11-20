@@ -10,6 +10,9 @@ import router from './router';
 import en from '@/assets/lang/en';
 import tw from '@/assets/lang/tw';
 
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
+
 const i18n = createI18n({
   legacy: false,
   locale: 'tw',
@@ -26,5 +29,6 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 app.use(i18n);
+app.use(ElementPlus);
 
 app.mount('#app');
