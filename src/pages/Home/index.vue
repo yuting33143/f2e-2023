@@ -32,10 +32,6 @@ const options = [
   <el-button>全台</el-button>
   <el-select v-model="selectedValue" placeholder="Select">
     <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-      <template #default="option">
-        <span v-if="option.value === selectedValue">x</span>
-        <!-- <span>{{ option.label }}</span> -->
-      </template>
     </el-option>
   </el-select>
 </template>
