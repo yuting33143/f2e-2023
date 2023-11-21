@@ -29,6 +29,11 @@
       }
     }
   }
+  .el-input__wrapper {
+    &.is-focus {
+      box-shadow: 0 0 0 1px $secondary inset !important;
+    }
+  }
 }
 
 .el-popper__arrow {
