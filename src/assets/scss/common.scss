@@ -1,0 +1,120 @@
+body {
+  font-family: Inter;
+}
+
+@mixin pad {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin mobile {
+  @media (max-width: 480px) {
+    @content;
+  }
+}
+
+@mixin header1 {
+  font-size: 40px;
+  font-weight: 700;
+  color: $black;
+  line-height: 150%;
+
+  @include mobile() {
+    font-size: 36px;
+  }
+}
+@mixin header2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: $black;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 24px;
+  }
+}
+@mixin header3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: $black;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 20px;
+  }
+}
+@mixin header4 {
+  font-size: 22px;
+  font-weight: 700;
+  color: $black;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 18px;
+  }
+}
+@mixin header5 {
+  font-size: 20px;
+  font-weight: 700;
+  color: $black;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 16px;
+  }
+}
+@mixin header6 {
+  font-size: 18px;
+  font-weight: 700;
+  color: $black;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 14px;
+  }
+}
+@mixin header7 {
+  font-size: 12px;
+  font-weight: 700;
+  color: $black;
+  line-height: 150%;
+}
+
+@mixin text1 {
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 18px;
+  }
+}
+@mixin text2 {
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 16px;
+  }
+}
+@mixin text3 {
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 14px;
+  }
+}
+@mixin text4 {
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  @include mobile() {
+    font-size: 12px;
+  }
+}
+@mixin text5 {
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+}
