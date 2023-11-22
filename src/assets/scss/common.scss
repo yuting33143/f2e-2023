@@ -119,3 +119,10 @@ body {
   font-weight: 400;
   line-height: 150%;
 }
+
+@mixin flex-setting($justify: center, $align: center, $direction: row) {
+  display: flex;
+  justify-content: $justify;
+  align-items: $align;
+  flex-direction: $direction;
+}
