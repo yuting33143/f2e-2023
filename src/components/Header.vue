@@ -1,11 +1,13 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { useWindowSizeStore } from '@/stores/windowSize.js';
 const { locale } = useI18n();
 
 const changeLanguage = value => {
   locale.value = value;
+  selectedLanguage.value = value;
 };
 
 // TODO:解決重整語言跳回中文
@@ -18,9 +20,26 @@ const languages = [
 
 const selectTab = ref('current');
 
+// const navTab = [
+//   {
+//     text: $t('header.current'),
+//     value: 'current'
+//   },
+//   {
+//     text: $t('header.history'),
+//     value: 'history'
+//   }
+// ];
+
 function changeTab(tab) {
   selectTab.value = tab;
 }
+
+const windowSizeStore = useWindowSizeStore();
+
+const isMobile = computed(() => windowSizeStore.width <= 768);
+
+const isMobileHeader = ref(false);
 </script>
 
 <template>
@@ -28,8 +47,9 @@ function changeTab(tab) {
     <div class="logo">
       <img src="@/assets/images/logo-b.png" />
     </div>
-    <div class="tab-group">
+    <div class="tab-group" v-if="!isMobile">
       <RouterLink
+        ref="tabCurrent"
         class="tab current-tab"
         :class="{ active: selectTab == 'current', 'en-width': selectedLanguage == 'en' }"
         to="/current"
@@ -37,14 +57,22 @@ function changeTab(tab) {
         >{{ $t('header.current') }}</RouterLink
       >
       <RouterLink
+        ref="tabHistory"
         class="tab history-tab"
         :class="{ active: selectTab == 'history' }"
         to="/history"
         @click="changeTab('history')"
         >{{ $t('header.history') }}</RouterLink
       >
+      <div
+        class="tab-indicator"
+        :class="{
+          'history-tab-select': selectTab == 'history',
+          'en-width': selectedLanguage == 'en'
+        }"
+      ></div>
     </div>
-    <div class="lang">
+    <div class="lang" v-if="!isMobile">
       <el-select v-model="selectedLanguage">
         <el-option
           v-for="(item, index) in languages"
@@ -58,13 +86,47 @@ function changeTab(tab) {
         </template>
       </el-select>
     </div>
+    <div v-if="isMobile" @click="isMobileHeader = true">
+      <img src="@/assets/images/button/menu.png" alt="" />
+    </div>
+    <el-drawer v-model="isMobileHeader" direction="rtl" size="100%" class="nav-dialog">
+      <template #title>
+        <div class="logo">
+          <img src="@/assets/images/logo-w.png" />
+        </div>
+      </template>
+      <div class="dialog-content">
+        <div class="mobile-tab-group">
+          <RouterLink class="mobile-tab" @click="isMobileHeader = false" to="/current">
+            <div>{{ $t('header.current') }}</div>
+            <img src="@/assets/images/icon/go.png" alt="" />
+          </RouterLink>
+          <RouterLink class="mobile-tab" @click="isMobileHeader = false" to="/history">
+            <div>{{ $t('header.current') }}</div>
+            <img src="@/assets/images/icon/go.png" alt="" />
+          </RouterLink>
+        </div>
+        <div class="lang-group">
+          <div
+            class="lang"
+            :class="{ 'lang-selected': selectedLanguage == item.value }"
+            v-for="(item, index) in languages"
+            :key="index"
+            @click="changeLanguage(item.value)"
+          >
+            {{ item.text }}
+          </div>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 <style lang="scss" scoped>
 .wrapper {
   height: 99px;
   background-color: $blue-bg;
-  padding: 20px 88px;
+  border-bottom: 1px solid $white;
+  padding: 20px 3%;
   box-sizing: border-box;
   display: flex;
   justify-content: space-between;
@@ -74,10 +136,16 @@ function changeTab(tab) {
   left: 0;
   width: 100%;
   z-index: 1000;
+  @include pad() {
+    height: 69px;
+  }
 
   .logo {
     img {
       height: 50px;
+      @include pad() {
+        height: 29px;
+      }
     }
   }
   .tab-group {
@@ -90,6 +158,7 @@ function changeTab(tab) {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative;
     .tab {
       @include text3;
       text-decoration: none;
@@ -98,6 +167,11 @@ function changeTab(tab) {
       display: flex;
       justify-content: center;
       align-items: center;
+      z-index: 2;
+
+      &:hover {
+        color: $secondary;
+      }
     }
     .current-tab {
       width: 96px;
@@ -107,10 +181,28 @@ function changeTab(tab) {
     }
     .active {
       color: $white;
-      background-color: $black;
-      border-radius: 16px;
     }
     .en-width {
+      width: 132px;
+    }
+
+    .tab-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      height: 43px;
+      width: 96px;
+      background-color: $black;
+      border-radius: 16px;
+      transition: all 0.25s ease-out;
+      z-index: 1;
+
+      &.en-width {
+        width: 132px;
+      }
+    }
+    .history-tab-select {
+      left: 138px;
       width: 132px;
     }
   }
@@ -143,6 +235,65 @@ function changeTab(tab) {
     }
     &.is-focus {
       box-shadow: none !important;
+    }
+  }
+}
+</style>
+
+<style lang="scss">
+.nav-dialog {
+  background: $primary !important;
+  .el-drawer__close-btn {
+    .el-icon {
+      color: $white;
+    }
+  }
+  .dialog-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    padding: 20px 5px;
+
+    .mobile-tab-group {
+      margin-top: 50px;
+      .mobile-tab {
+        font-size: 18px;
+        color: $white;
+        display: flex;
+        justify-content: left;
+        align-items: center;
+        margin-bottom: 24px;
+        cursor: pointer;
+        text-decoration: none;
+
+        &:hover {
+          color: $blue-light;
+        }
+
+        div {
+          margin-right: 16px;
+        }
+      }
+    }
+    .lang-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: $secondary;
+
+      .lang:first-child {
+        display: flex;
+        gap: 8px;
+        &::after {
+          content: '｜';
+          display: block;
+          color: $white;
+        }
+      }
+      .lang-selected {
+        color: $white;
+      }
     }
   }
 }
