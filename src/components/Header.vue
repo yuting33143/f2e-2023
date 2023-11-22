@@ -44,9 +44,9 @@ const isMobileHeader = ref(false);
 
 <template>
   <div class="wrapper">
-    <div class="logo">
+    <RouterLink class="logo" to="/">
       <img src="@/assets/images/logo-b.png" />
-    </div>
+    </RouterLink>
     <div class="tab-group" v-if="!isMobile">
       <RouterLink
         ref="tabCurrent"
@@ -142,6 +142,7 @@ const isMobileHeader = ref(false);
 
   .logo {
     img {
+      cursor: pointer;
       height: 50px;
       @include pad() {
         height: 29px;
