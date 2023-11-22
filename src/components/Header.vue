@@ -102,7 +102,7 @@ const isMobileHeader = ref(false);
             <img src="@/assets/images/icon/go.png" alt="" />
           </RouterLink>
           <RouterLink class="mobile-tab" @click="isMobileHeader = false" to="/history">
-            <div>{{ $t('header.current') }}</div>
+            <div>{{ $t('header.history') }}</div>
             <img src="@/assets/images/icon/go.png" alt="" />
           </RouterLink>
         </div>
