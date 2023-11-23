@@ -91,9 +91,9 @@ const isMobileHeader = ref(false);
     </div>
     <el-drawer v-model="isMobileHeader" direction="rtl" size="100%" class="nav-dialog">
       <template #title>
-        <div class="logo">
+        <RouterLink class="logo" to="/" @click="isMobileHeader = false">
           <img src="@/assets/images/logo-w.png" />
-        </div>
+        </RouterLink>
       </template>
       <div class="dialog-content">
         <div class="mobile-tab-group">
@@ -138,6 +138,7 @@ const isMobileHeader = ref(false);
   z-index: 1000;
   @include pad() {
     height: 69px;
+    border-bottom: 1px solid #e3e3e3;
   }
 
   .logo {

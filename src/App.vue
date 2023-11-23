@@ -14,5 +14,9 @@ import Header from '@/components/Header.vue';
 <style lang="scss">
 body {
   padding-top: 99px;
+
+  @include pad() {
+    padding-top: 69px;
+  }
 }
 </style>
