@@ -1,35 +1,44 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { RouterLink } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { useRoute, RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useWindowSizeStore } from '@/stores/windowSize.js';
 const { locale } = useI18n();
 
+const selectedLanguage = ref('tw');
+
 const changeLanguage = value => {
   locale.value = value;
   selectedLanguage.value = value;
+  localStorage.setItem('selectedLanguage', value);
 };
 
-// TODO:解決重整語言跳回中文
-const selectedLanguage = ref('tw');
+const savedLanguage = localStorage.getItem('selectedLanguage');
+if (savedLanguage) {
+  locale.value = savedLanguage;
+  selectedLanguage.value = savedLanguage;
+}
 
 const languages = [
   { text: '中文', value: 'tw' },
   { text: 'English', value: 'en' }
 ];
 
-const selectTab = ref('current');
+const selectTab = ref('');
+const route = useRoute();
 
-// const navTab = [
-//   {
-//     text: $t('header.current'),
-//     value: 'current'
-//   },
-//   {
-//     text: $t('header.history'),
-//     value: 'history'
-//   }
-// ];
+watch(
+  () => route.path,
+  newPath => {
+    if (newPath === '/history') {
+      selectTab.value = 'history';
+    } else if (newPath === '/current') {
+      selectTab.value = 'current';
+    } else {
+      selectTab.value = '';
+    }
+  }
+);
 
 function changeTab(tab) {
   selectTab.value = tab;
@@ -44,7 +53,7 @@ const isMobileHeader = ref(false);
 
 <template>
   <div class="wrapper">
-    <RouterLink class="logo" to="/">
+    <RouterLink class="logo" to="/" @click="selectTab = ''">
       <img src="@/assets/images/logo-b.png" />
     </RouterLink>
     <div class="tab-group" v-if="!isMobile">
@@ -65,6 +74,7 @@ const isMobileHeader = ref(false);
         >{{ $t('header.history') }}</RouterLink
       >
       <div
+        v-if="selectTab !== ''"
         class="tab-indicator"
         :class="{
           'history-tab-select': selectTab == 'history',
@@ -86,7 +96,13 @@ const isMobileHeader = ref(false);
         </template>
       </el-select>
     </div>
-    <div v-if="isMobile" @click="isMobileHeader = true">
+    <div
+      v-if="isMobile"
+      @click="
+        isMobileHeader = true;
+        selectTab = '';
+      "
+    >
       <img src="@/assets/images/button/menu.png" alt="" />
     </div>
     <el-drawer v-model="isMobileHeader" direction="rtl" size="100%" class="nav-dialog">

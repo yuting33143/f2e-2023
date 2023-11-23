@@ -12,12 +12,12 @@ const router = createRouter({
     {
       path: '/current',
       name: 'current',
-      component: async () => import('@/pages/Current/index.vue')
+      component: async () => import('@/pages/Current.vue')
     },
     {
       path: '/history',
       name: 'history',
-      component: async () => import('@/pages/History/index.vue')
+      component: async () => import('@/pages/History.vue')
     }
   ]
 });
