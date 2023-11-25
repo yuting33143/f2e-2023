@@ -6,12 +6,23 @@ import { useI18n } from 'vue-i18n';
 import catImage from '@/assets/images/catCandidate.svg';
 import dogImage from '@/assets/images/dogCandidate.svg';
 import birdImage from '@/assets/images/birdCandidate.svg';
+import catImage from '@/assets/images/catCandidate.svg';
+import dogImage from '@/assets/images/dogCandidate.svg';
+import birdImage from '@/assets/images/birdCandidate.svg';
 
-const { locale } = useI18n();
+const windowSizeStore = useWindowSizeStore();
+const isMobile = computed(() => windowSizeStore.width <= 768);
 
 // 調用動態 vh
 // useDynamicViewport()
+switch (isMobile) {
+  case value:
+    
+    break;
 
+  default:
+    break;
+}
 const Candidate = [
   {
     id: 1,    
@@ -30,9 +41,7 @@ const Candidate = [
   }
 ];
 
-const windowSizeStore = useWindowSizeStore();
 
-const isMobile = computed(() => windowSizeStore.width <= 768);
 
 
 </script>
