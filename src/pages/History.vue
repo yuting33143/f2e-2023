@@ -267,8 +267,16 @@ const winParty = ref('1');
   height: 1000px;
   padding: 60px 3%;
   display: flex;
+
+  @include rwd() {
+    flex-direction: column;
+  }
   .left {
     width: 60%;
+
+    @include rwd() {
+      width: 100%;
+    }
     .year-tab {
       display: flex;
       gap: 18px;
@@ -358,6 +366,11 @@ const winParty = ref('1');
       align-items: center;
       justify-content: space-between;
       position: relative;
+
+      @include pad() {
+        height: 32px;
+        border-radius: 16px;
+      }
       .tab {
         @include header5;
         width: 50%;
@@ -407,6 +420,10 @@ const winParty = ref('1');
         align-items: center;
         justify-content: space-between;
         gap: 20px;
+
+        @media (max-width: 1180px) {
+          gap: 10px;
+        }
         .people-card {
           width: 33%;
           .people-wrapper {
@@ -445,6 +462,10 @@ const winParty = ref('1');
               .name {
                 @include header4;
                 color: $white;
+
+                @media (max-width: 1100px) {
+                  font-size: 18px;
+                }
               }
             }
             .vote {
@@ -460,6 +481,9 @@ const winParty = ref('1');
               right: 0px;
               transform: scale(1.15);
               z-index: 3;
+              @media (max-width: 1080px) {
+                right: -20px;
+              }
             }
           }
           .bg-orange {
@@ -506,6 +530,9 @@ const winParty = ref('1');
       justify-content: space-between;
       gap: 32px;
       margin-top: 32px;
+      @media (max-width: 1448px) {
+        flex-direction: column;
+      }
       .info-area {
         background-color: $white;
         box-shadow: 0px 0px 6px 0px rgba(206, 214, 226, 0.25);
@@ -516,11 +543,18 @@ const winParty = ref('1');
         display: flex;
         align-items: end;
         justify-content: space-between;
+
         &.vote-percent {
           width: 40%;
+          @media (max-width: 1448px) {
+            width: 100%;
+          }
         }
         &.vote-total {
           width: 60%;
+          @media (max-width: 1448px) {
+            width: 100%;
+          }
         }
         .vote-text {
           display: flex;
@@ -536,10 +570,6 @@ const winParty = ref('1');
           .percent-info,
           .total-vote {
             @include header1;
-
-            @media (max-width: 1448px) {
-              font-size: 36px;
-            }
           }
           .vote-note,
           .total-note {
@@ -550,20 +580,12 @@ const winParty = ref('1');
               img {
                 height: 28px;
                 width: 28px;
-                @media (max-width: 1448px) {
-                  height: 20px;
-                  width: 20px;
-                }
               }
             }
             .word {
               @include text4;
               color: $gray;
               padding-bottom: 2px;
-
-              @media (max-width: 1448px) {
-                font-size: 12px;
-              }
             }
           }
         }
@@ -572,10 +594,6 @@ const winParty = ref('1');
           height: 105px;
           border-radius: 50%;
           background-color: $secondary;
-          @media (max-width: 1448px) {
-            width: 90px;
-            height: 90px;
-          }
         }
         .ok-no-vote {
           display: flex;
@@ -605,6 +623,9 @@ const winParty = ref('1');
   }
   .right {
     width: 40%;
+    @include rwd() {
+      width: 100%;
+    }
   }
 }
 </style>
