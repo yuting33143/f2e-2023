@@ -58,7 +58,6 @@ const isMobileHeader = ref(false);
     </RouterLink>
     <div class="tab-group" v-if="!isMobile">
       <RouterLink
-        ref="tabCurrent"
         class="tab current-tab"
         :class="{ active: selectTab == 'current', 'en-width': selectedLanguage == 'en' }"
         to="/current"
@@ -66,7 +65,6 @@ const isMobileHeader = ref(false);
         >{{ $t('header.current') }}</RouterLink
       >
       <RouterLink
-        ref="tabHistory"
         class="tab history-tab"
         :class="{ active: selectTab == 'history' }"
         to="/history"
