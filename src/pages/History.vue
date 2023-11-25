@@ -1172,6 +1172,9 @@ const popoverProportionUp = ref(true);
             }
             .city-scale-bar {
               height: 30px;
+              @include pad {
+                height: 24px;
+              }
             }
           }
         }
