@@ -4,6 +4,9 @@ import ScaleBar from '@/components/scaleBar.vue';
 import catImage from '@/assets/images/cat-main.png';
 import dogImage from '@/assets/images/dog-main.png';
 import birdImage from '@/assets/images/bird-main.png';
+import catCircleImage from '@/assets/images/cat-circle.png';
+import dogCircleImage from '@/assets/images/dog-circle.png';
+import birdCircleImage from '@/assets/images/bird-circle.png';
 import catBg from '@/assets/images/bg-orange.png';
 import dogBg from '@/assets/images/bg-blue.png';
 import birdBg from '@/assets/images/bg-green.png';
@@ -53,7 +56,7 @@ function changePeriod(direction) {
   }
 }
 
-const selectedSecondTab = ref('all');
+const selectedSecondTab = ref('area');
 
 function changeSelectedSecondTab(tab) {
   selectedSecondTab.value = tab;
@@ -66,6 +69,7 @@ const candidate = ref([
     vicePresident: '三花',
     party: '貓貓進步黨',
     img: catImage,
+    circleImg: catCircleImage,
     bg: catBg,
     color: 'orange',
     vote: 8170231
@@ -76,6 +80,7 @@ const candidate = ref([
     vicePresident: '旺福',
     party: '旺星人守護黨',
     img: dogImage,
+    circleImg: dogCircleImage,
     bg: dogBg,
     color: 'blue',
     vote: 5522119
@@ -86,6 +91,7 @@ const candidate = ref([
     vicePresident: '波波',
     party: '鳥類保育黨',
     img: birdImage,
+    circleImg: birdCircleImage,
     bg: birdBg,
     color: 'green',
     vote: 608590
@@ -103,6 +109,135 @@ const candidatePercentages = computed(() => {
 console.log(candidatePercentages.value);
 
 const winParty = ref('1');
+
+const testCountry = [
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  },
+  {
+    city: '台北市',
+    party1: '42',
+    party2: '54',
+    party3: '14'
+  },
+  {
+    city: '新北市',
+    party1: '37',
+    party2: '42',
+    party3: '21'
+  }
+];
+
+const searchResults = {
+  city: '新北市',
+  area: '板橋區',
+  unit: '新翠里'
+};
 </script>
 
 <template>
@@ -278,10 +413,60 @@ const winParty = ref('1');
           </div>
         </div>
       </div>
-      <!--  -->
+      <!-- 各區票數 -->
+      <div v-if="selectedSecondTab == 'area'" class="area-wrapper">
+        <!-- 左邊全區scalebar(各區票數) -->
+        <div class="area area-left">
+          <div class="search" v-if="!isMobile">
+            <el-button class="all-btn">全臺</el-button>
+            <el-select class="city-select" placeholder="縣市"></el-select>
+            <el-select class="area-select" placeholder="選擇鄉鎮區"></el-select>
+            <el-select class="unit-select" placeholder="選擇里"></el-select>
+          </div>
+          <div class="left-title">
+            <div class="town">鄉鎮區</div>
+            <div class="win-vote">得票佔比</div>
+          </div>
+          <div class="left-info">
+            <div class="bar" v-for="(item, index) in testCountry" :key="index">
+              <div class="city">{{ item.city }}</div>
+              <ScaleBar
+                class="city-scale-bar"
+                :aPercent="Number(item.party1)"
+                :bPercent="Number(item.party2)"
+                :cPercent="Number(item.party3)"
+              >
+              </ScaleBar>
+            </div>
+          </div>
+        </div>
+        <!-- 右邊三個候選人(各區票數) -->
+        <div class="area area-right">
+          <div v-if="isMobile" class="search-bar">
+            <div class="select-area">
+              {{ searchResults.city }}{{ searchResults.area }}{{ searchResults.unit }}
+            </div>
+            <img class="search-icon" src="@/assets/images/button/search-w.png" alt="" />
+          </div>
+          <div class="area-people-group" v-for="(item, index) in candidate" :key="index">
+            <img class="area-people" :src="item.img" v-if="!isMobile" />
+            <img v-else class="area-people" :src="item.circleImg" alt="" />
+            <div class="area-title" :class="`bg-${item.color}-light`">
+              <div class="area-number" :class="`bg-${item.color}`">{{ item.number }}</div>
+              <div class="area-party" :class="`text-${item.color}`">{{ item.party }}</div>
+            </div>
+            <div class="area-info">
+              <div class="info-name" v-if="!isMobile">
+                {{ item.president }} / {{ item.vicePresident }}
+              </div>
+              <div class="info-total">{{ item.vote }}票</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <!-- 右邊 -->
-    <div>
+    <div class="right">
       <!-- map -->
       <div></div>
     </div>
@@ -300,6 +485,7 @@ const winParty = ref('1');
 
   @include pad {
     padding-top: 30px;
+    height: auto;
   }
   .left {
     width: 60%;
@@ -418,8 +604,10 @@ const winParty = ref('1');
           }
         }
         .period {
-          background-color: $primary;
-          color: $white;
+          @include pad {
+            background-color: $primary;
+            color: $white;
+          }
         }
 
         &.tab {
@@ -663,15 +851,6 @@ const winParty = ref('1');
               top: 13px;
             }
           }
-          .bg-orange {
-            background-color: $orange !important;
-          }
-          .bg-blue {
-            background-color: $blue !important;
-          }
-          .bg-green {
-            background-color: $green !important;
-          }
 
           .detail {
             display: flex;
@@ -855,6 +1034,235 @@ const winParty = ref('1');
         }
       }
     }
+    .area-wrapper {
+      display: flex;
+      gap: 33px;
+      margin-top: 32px;
+
+      @include pad {
+        flex-direction: column-reverse;
+      }
+
+      .area {
+      }
+      .area-left {
+        border-radius: 20px;
+        box-shadow: 0px 0px 6px 0px rgba(206, 214, 226, 0.25);
+        background-color: $white;
+        width: calc(100% - 248px);
+        height: 520px;
+        padding: 24px;
+        box-sizing: border-box;
+
+        @include pad {
+          width: 100%;
+          height: auto;
+        }
+
+        .search {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          justify-content: space-between;
+          .all-btn {
+            flex-grow: 0;
+            flex-shrink: 0;
+          }
+          .city-select {
+            min-width: 120px;
+            flex-grow: 1;
+            flex-shrink: 1;
+            flex-basis: 0;
+          }
+          .area-select {
+            min-width: 134px;
+            flex-grow: 1;
+            flex-shrink: 1;
+            flex-basis: 0;
+          }
+          .unit-select {
+            min-width: 115px;
+            flex-grow: 1;
+            flex-shrink: 1;
+            flex-basis: 0;
+          }
+        }
+        .left-title {
+          display: flex;
+          align-items: center;
+          @include text5;
+          color: $gray3;
+          margin-top: 24px;
+
+          @include pad {
+            margin-top: 0;
+          }
+
+          .town {
+            width: 81px;
+          }
+          .win-vote {
+          }
+        }
+        .left-info {
+          margin-top: 22px;
+          height: 382px;
+          overflow: auto;
+          &::-webkit-scrollbar {
+            display: none;
+          }
+          scrollbar-width: none;
+
+          @media (max-width: 1357px) {
+            height: 323px;
+          }
+          @include rwd {
+            height: 382px;
+          }
+          @media (max-width: 820px) {
+            height: 323px;
+          }
+          @include pad {
+            margin-top: 16px;
+            height: auto;
+          }
+          .bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 32px;
+
+            @include pad {
+              margin-bottom: 28px;
+            }
+            .city {
+              width: 95px;
+              @include header5;
+            }
+            .city-scale-bar {
+              height: 30px;
+            }
+          }
+        }
+      }
+      .area-right {
+        width: 215px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        @include pad {
+          width: 100%;
+          background-color: $white;
+          box-shadow: 0px 4px 20px 0px rgba(174, 174, 174, 0.2);
+          border-radius: 20px;
+          padding-bottom: 8px;
+        }
+
+        .search-bar {
+          height: 50px;
+          border-radius: 20px;
+          background-color: $black;
+          color: $white;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 14px 18px;
+          box-sizing: border-box;
+          cursor: pointer;
+
+          @include pad {
+            margin-bottom: 8px;
+          }
+          .select-area {
+          }
+          .search-icon {
+          }
+        }
+        .area-people-group {
+          border-radius: 20px;
+          box-shadow: 0px 0px 6px 0px rgba(206, 214, 226, 0.25);
+          background-color: $white;
+          height: 152px;
+          padding: 16px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          position: relative;
+
+          @include pad {
+            box-shadow: none;
+            flex-direction: row;
+            align-items: center;
+            height: 50px;
+          }
+          .area-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px;
+            border-radius: 7px;
+
+            @include pad {
+            }
+
+            .area-number {
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: $white;
+              @include text5;
+
+              @include pad {
+                width: 16px;
+                height: 16px;
+                @include header7;
+              }
+            }
+            .area-party {
+              color: $orange;
+              @include text5;
+
+              @include pad {
+                @include header7;
+              }
+            }
+          }
+          .area-info {
+            @include pad {
+              margin-left: auto;
+            }
+            .info-name {
+              @include text4;
+              color: $gray;
+            }
+            .info-total {
+              @include header4;
+              color: $black;
+
+              @include pad {
+                @include header5;
+              }
+            }
+          }
+          .area-people {
+            position: absolute;
+            bottom: -7px;
+            right: -7px;
+            display: block;
+            width: 122px;
+
+            @include pad {
+              width: 33px;
+              position: initial;
+            }
+          }
+        }
+      }
+    }
   }
   .right {
     width: 40%;
@@ -872,5 +1280,24 @@ const winParty = ref('1');
 }
 .bg-green-light {
   background-color: $green-light !important;
+}
+.bg-orange {
+  background-color: $orange !important;
+}
+.bg-blue {
+  background-color: $blue !important;
+}
+.bg-green {
+  background-color: $green !important;
+}
+
+.text-orange {
+  color: $orange !important;
+}
+.text-blue {
+  color: $blue !important;
+}
+.text-green {
+  color: $green !important;
 }
 </style>
