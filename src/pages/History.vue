@@ -7,6 +7,11 @@ import birdImage from '@/assets/images/bird-main.png';
 import catBg from '@/assets/images/bg-orange.png';
 import dogBg from '@/assets/images/bg-blue.png';
 import birdBg from '@/assets/images/bg-green.png';
+import { useWindowSizeStore } from '@/stores/windowSize.js';
+
+const windowSizeStore = useWindowSizeStore();
+
+const isMobile = computed(() => windowSizeStore.width <= 768);
 
 const yearTab = [
   {
@@ -123,7 +128,7 @@ const winParty = ref('1');
           第<span>{{ selectedPeriod }}</span
           >任總統副總統選舉
         </div>
-        <div class="arrow">
+        <div class="arrow" v-if="!isMobile">
           <div>
             <img
               v-if="selectedPeriod != '15'"
@@ -170,8 +175,16 @@ const winParty = ref('1');
         <!-- 三個區塊-->
         <div class="people-container">
           <!-- v-for -->
-          <div class="people-card" v-for="(item, index) in candidate" :key="index">
-            <div class="people-wrapper" :style="{ 'background-image': 'url(' + item.bg + ')' }">
+          <div
+            class="people-card"
+            v-for="(item, index) in candidate"
+            :key="index"
+            :class="{ [`bg-${item.color}-light`]: isMobile }"
+          >
+            <div
+              class="people-wrapper"
+              :style="!isMobile ? { 'background-image': 'url(' + item.bg + ')' } : {}"
+            >
               <div class="number" :class="`bg-${item.color}`">{{ item.number }}</div>
               <div class="text">
                 <div class="group">{{ item.party }}</div>
@@ -179,13 +192,23 @@ const winParty = ref('1');
               </div>
               <img
                 class="vote"
-                v-if="winParty == item.number"
+                v-if="winParty == item.number && !isMobile"
                 src="@/assets/images/elected-w.png"
               />
+              <img
+                class="vote"
+                v-if="winParty == item.number && isMobile"
+                src="@/assets/images/elected-b.png"
+              />
               <img class="people" :src="item.img" />
+              <div
+                v-if="isMobile"
+                class="people-rwd-bg"
+                :style="{ 'background-image': 'url(' + item.bg + ')' }"
+              ></div>
             </div>
             <div class="detail">
-              <div class="party-color" :class="`bg-${item.color}`"></div>
+              <div class="party-color" :class="`bg-${item.color}`" v-if="!isMobile"></div>
               <div class="info">
                 <div class="total">{{ item.vote }}票</div>
                 <div class="percent">{{ candidatePercentages[index] }}%</div>
@@ -198,6 +221,7 @@ const winParty = ref('1');
           :bPercent="Number(candidatePercentages[1])"
           :cPercent="Number(candidatePercentages[2])"
           class="scale-bar"
+          v-if="!isMobile"
         ></ScaleBar>
       </div>
       <!-- 左下兩個區塊(選舉總覽) -->
@@ -212,7 +236,7 @@ const winParty = ref('1');
                 <img src="@/assets/images/icon/up.png" />
                 <!-- <img src="@/assets/images/icon/down.png" /> -->
               </div>
-              <div class="word">較前屆<span>上升</span><span>3.02</span>%</div>
+              <div class="word">較前屆<span>上升</span><span class="word-number">3.02</span>%</div>
             </div>
           </div>
           <div class="circle"></div>
@@ -228,7 +252,9 @@ const winParty = ref('1');
                 <img src="@/assets/images/icon/up.png" />
                 <!-- <img src="@/assets/images/icon/down.png" /> -->
               </div>
-              <div class="word">較前屆<span>上升</span><span>123433</span>票</div>
+              <div class="word">
+                較前屆<span>上升</span><span class="word-number">123433</span>票
+              </div>
             </div>
           </div>
           <!-- 有效/無效票 -->
@@ -271,6 +297,10 @@ const winParty = ref('1');
   @include rwd() {
     flex-direction: column;
   }
+
+  @include pad {
+    padding-top: 30px;
+  }
   .left {
     width: 60%;
 
@@ -280,6 +310,17 @@ const winParty = ref('1');
     .year-tab {
       display: flex;
       gap: 18px;
+
+      @include pad {
+        gap: 5px;
+        background-color: $white;
+        position: fixed;
+        width: 100%;
+        top: 69px;
+        left: 0px;
+        z-index: 50;
+        height: 44px;
+      }
 
       .tab {
         display: flex;
@@ -293,8 +334,33 @@ const winParty = ref('1');
         box-shadow: 0px 0px 6px 0px rgba(206, 214, 226, 0.25);
         cursor: pointer;
 
+        @include pad {
+          gap: 3px;
+          height: 42px;
+          border-radius: 25px;
+          width: 25%;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
         &:hover {
           background-color: $primary;
+
+          .period {
+            @include pad {
+              background-color: $primary;
+              color: $white;
+            }
+          }
+          .year {
+            @include pad {
+              color: $black;
+            }
+          }
+
+          @include pad {
+            background-color: $white;
+          }
         }
         .period {
           width: 32px;
@@ -309,27 +375,55 @@ const winParty = ref('1');
           align-items: center;
           justify-content: center;
 
+          @include pad {
+            width: 22px;
+            height: 22px;
+            font-size: 11px;
+          }
+
           span {
             font-size: 8px;
             font-weight: 600;
             padding-top: 6px;
+
+            @include pad {
+              font-size: 5px;
+            }
           }
         }
         .year {
-          font-size: 20px;
-          font-weight: 700;
           color: $gray3;
+          @include header5;
 
           &:hover {
             color: $white;
+            @include pad {
+              color: $black;
+            }
           }
         }
       }
       .selected {
         background-color: $primary;
 
+        @include pad {
+          background-color: $white;
+        }
+
         .year {
           color: $white;
+
+          @include pad {
+            color: $black;
+          }
+        }
+        .period {
+          background-color: $primary;
+          color: $white;
+        }
+
+        &.tab {
+          border-bottom: 2px solid $primary;
         }
       }
     }
@@ -338,6 +432,10 @@ const winParty = ref('1');
       justify-content: space-between;
       align-items: center;
       margin-top: 40px;
+
+      @include pad {
+        margin-top: 32px;
+      }
 
       .text {
         @include header2;
@@ -368,8 +466,8 @@ const winParty = ref('1');
       position: relative;
 
       @include pad() {
-        height: 32px;
-        border-radius: 16px;
+        height: 44px;
+        border-radius: 20px;
       }
       .tab {
         @include header5;
@@ -386,6 +484,10 @@ const winParty = ref('1');
         &:hover {
           color: $secondary;
         }
+
+        @include pad() {
+          height: 32px;
+        }
       }
       .active {
         color: $white;
@@ -401,6 +503,10 @@ const winParty = ref('1');
         border-radius: 16px;
         transition: all 0.25s ease-out;
         z-index: 1;
+        @include pad() {
+          height: 32px;
+          bottom: 6px;
+        }
       }
       .area-tab-select {
         left: 48%;
@@ -415,6 +521,11 @@ const winParty = ref('1');
       padding: 24px;
       box-sizing: border-box;
 
+      @include pad() {
+        padding: 10px;
+        margin-top: 16px;
+      }
+
       .people-container {
         display: flex;
         align-items: center;
@@ -424,12 +535,24 @@ const winParty = ref('1');
         @media (max-width: 1180px) {
           gap: 10px;
         }
+        @include pad() {
+          flex-direction: column;
+        }
         .people-card {
           width: 33%;
+
+          @include pad() {
+            width: 100%;
+            height: 84px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+          }
           .people-wrapper {
             height: 146px;
             border-radius: 16px 50px 16px 16px;
-            background-image: url('@/assets/images/bg-orange.png');
             background-repeat: no-repeat;
             background-size: cover;
             padding: 12px;
@@ -438,6 +561,14 @@ const winParty = ref('1');
             justify-content: space-between;
             align-items: start;
             position: relative;
+            box-sizing: border-box;
+
+            @include pad() {
+              flex-direction: row;
+              height: 84px;
+              align-items: center;
+              position: initial;
+            }
 
             .number {
               width: 34px;
@@ -452,12 +583,28 @@ const winParty = ref('1');
               align-items: center;
               justify-content: center;
               z-index: 2;
+
+              @include pad() {
+                @include header7;
+                width: 16px;
+                height: 16px;
+                margin-right: 55px;
+                align-self: start;
+              }
             }
             .text {
               z-index: 4;
+              @include pad() {
+                display: flex;
+                flex-direction: column-reverse;
+              }
               .group {
-                @include text5;
+                @include text4;
                 color: $white;
+
+                @include pad() {
+                  color: $gray;
+                }
               }
               .name {
                 @include header4;
@@ -465,6 +612,10 @@ const winParty = ref('1');
 
                 @media (max-width: 1100px) {
                   font-size: 18px;
+                }
+
+                @include pad() {
+                  color: $black;
                 }
               }
             }
@@ -474,6 +625,15 @@ const winParty = ref('1');
               left: 16px;
               mix-blend-mode: soft-light;
               z-index: 1;
+
+              @include pad() {
+                left: auto;
+                right: 3%;
+                top: 10px;
+                width: 64px;
+                mix-blend-mode: color-burn;
+                opacity: 50%;
+              }
             }
             .people {
               position: absolute;
@@ -484,6 +644,23 @@ const winParty = ref('1');
               @media (max-width: 1080px) {
                 right: -20px;
               }
+              @include pad() {
+                width: 55px;
+                right: auto;
+                bottom: auto;
+                top: 16px;
+                left: 18px;
+                z-index: 1;
+              }
+            }
+            .people-rwd-bg {
+              width: 64px;
+              height: 64px;
+              background-size: cover;
+              border-radius: 16px;
+              position: absolute;
+              left: 13px;
+              top: 13px;
             }
           }
           .bg-orange {
@@ -495,11 +672,17 @@ const winParty = ref('1');
           .bg-green {
             background-color: $green !important;
           }
+
           .detail {
             display: flex;
             align-items: start;
             gap: 5px;
             margin-top: 29px;
+
+            @include pad() {
+              margin-top: 0;
+              padding: 12px;
+            }
 
             .party-color {
               width: 20px;
@@ -508,13 +691,23 @@ const winParty = ref('1');
               margin-top: 5px;
             }
             .info {
+              text-align: right;
+              z-index: 5;
               .total {
                 @include header5;
                 color: $black;
+
+                @include pad() {
+                  @include header4;
+                }
               }
               .percent {
                 @include header6;
                 color: $gray;
+
+                @include pad() {
+                  color: $primary;
+                }
               }
             }
           }
@@ -533,6 +726,10 @@ const winParty = ref('1');
       @media (max-width: 1448px) {
         flex-direction: column;
       }
+      @include pad() {
+        margin-top: 16px;
+        gap: 16px;
+      }
       .info-area {
         background-color: $white;
         box-shadow: 0px 0px 6px 0px rgba(206, 214, 226, 0.25);
@@ -543,6 +740,10 @@ const winParty = ref('1');
         display: flex;
         align-items: end;
         justify-content: space-between;
+
+        @include pad() {
+          height: 153px;
+        }
 
         &.vote-percent {
           width: 40%;
@@ -555,6 +756,12 @@ const winParty = ref('1');
           @media (max-width: 1448px) {
             width: 100%;
           }
+          @include pad {
+            flex-direction: column;
+            align-items: start;
+            justify-content: space-between;
+            height: 243px;
+          }
         }
         .vote-text {
           display: flex;
@@ -562,6 +769,11 @@ const winParty = ref('1');
           justify-content: space-between;
           align-items: start;
           height: 100%;
+
+          @include pad() {
+            height: auto;
+          }
+
           .vote-title,
           .total-title {
             @include text2;
@@ -577,6 +789,10 @@ const winParty = ref('1');
             align-items: center;
             .icon {
               padding-top: 2px;
+
+              @include pad() {
+                margin-right: 5px;
+              }
               img {
                 height: 28px;
                 width: 28px;
@@ -586,6 +802,11 @@ const winParty = ref('1');
               @include text4;
               color: $gray;
               padding-bottom: 2px;
+
+              .word-number {
+                @include header6;
+                padding: 0px 3px;
+              }
             }
           }
         }
@@ -599,6 +820,16 @@ const winParty = ref('1');
           display: flex;
           flex-direction: column;
           gap: 15px;
+
+          @include pad() {
+            flex-direction: row;
+            height: 79px;
+            align-items: center;
+            border-radius: 12px;
+            background-color: $gray5;
+            width: 100%;
+            justify-content: space-around;
+          }
 
           .list-title {
             .top {
@@ -615,6 +846,10 @@ const winParty = ref('1');
             }
             .down {
               @include header6;
+
+              @include pad {
+                @include header4;
+              }
             }
           }
         }
@@ -627,5 +862,15 @@ const winParty = ref('1');
       width: 100%;
     }
   }
+}
+
+.bg-orange-light {
+  background-color: $orange-light !important;
+}
+.bg-blue-light {
+  background-color: $blue-light !important;
+}
+.bg-green-light {
+  background-color: $green-light !important;
 }
 </style>
