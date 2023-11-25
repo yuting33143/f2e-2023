@@ -18,7 +18,6 @@ body {
 @mixin header1 {
   font-size: 40px;
   font-weight: 700;
-  color: $black;
   line-height: 150%;
 
   @include mobile() {
@@ -28,7 +27,6 @@ body {
 @mixin header2 {
   font-size: 28px;
   font-weight: 700;
-  color: $black;
   line-height: 150%;
   @include mobile() {
     font-size: 24px;
@@ -37,7 +35,6 @@ body {
 @mixin header3 {
   font-size: 24px;
   font-weight: 700;
-  color: $black;
   line-height: 150%;
   @include mobile() {
     font-size: 20px;
@@ -46,7 +43,6 @@ body {
 @mixin header4 {
   font-size: 22px;
   font-weight: 700;
-  color: $black;
   line-height: 150%;
   @include mobile() {
     font-size: 18px;
@@ -55,7 +51,6 @@ body {
 @mixin header5 {
   font-size: 20px;
   font-weight: 700;
-  color: $black;
   line-height: 150%;
   @include mobile() {
     font-size: 16px;
@@ -63,17 +58,16 @@ body {
 }
 @mixin header6 {
   font-size: 18px;
-  font-weight: 700;
-  color: $black;
+  font-weight: 500;
   line-height: 150%;
   @include mobile() {
     font-size: 14px;
+    font-weight: 700;
   }
 }
 @mixin header7 {
   font-size: 12px;
   font-weight: 700;
-  color: $black;
   line-height: 150%;
 }
 
