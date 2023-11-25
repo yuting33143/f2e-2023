@@ -238,6 +238,10 @@ const searchResults = {
   area: '板橋區',
   unit: '新翠里'
 };
+
+const popoverUP = ref(true);
+
+const popoverProportionUp = ref(true);
 </script>
 
 <template>
@@ -469,6 +473,34 @@ const searchResults = {
     <div class="right">
       <!-- map -->
       <div></div>
+    </div>
+  </div>
+  <!-- 地圖的popover資訊 -->
+  <div class="popover">
+    <div class="popover-top">
+      <div class="popover-area">台北市士林區</div>
+    </div>
+    <div class="popover-bottom">
+      <div class="bottom-people" v-for="(item, index) in candidate" :key="index">
+        <div class="one">
+          <img class="img-people" :src="item.circleImg" alt="" />
+        </div>
+        <div class="two">
+          <div class="bottom-title" :class="`bg-${item.color}-light`">
+            <div class="bottom-number" :class="`bg-${item.color}`">{{ item.number }}</div>
+            <div class="bottom-party" :class="`text-${item.color}`">{{ item.party }}</div>
+          </div>
+          <div class="bottom-vote">{{ item.vote }}票</div>
+        </div>
+        <div class="three">
+          <div class="bottom-proportion">
+            <img v-if="popoverUP" src="@/assets/images/icon/raise.png" />
+            <img v-else src="@/assets/images/icon/decline.png" />
+            <div class="proportion" :class="{ 'proportion-up': popoverProportionUp }">4.2%</div>
+          </div>
+          <div class="bottom-percent">{{ candidatePercentages[index] }}%</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -1223,7 +1255,6 @@ const searchResults = {
               }
             }
             .area-party {
-              color: $orange;
               @include text5;
 
               @include pad {
@@ -1269,6 +1300,89 @@ const searchResults = {
     @include rwd() {
       width: 100%;
     }
+  }
+}
+.popover {
+  width: 308px;
+  height: 350px;
+  background-color: $white;
+  box-shadow: 0px 4px 20px 0px rgba(174, 174, 174, 0.2);
+  border-radius: 20px;
+  box-sizing: border-box;
+  .popover-top {
+    border-radius: 20px;
+    background-color: $black;
+    height: 56px;
+    color: $white;
+    @include header6;
+    display: flex;
+    align-items: center;
+    padding: 0 26px;
+  }
+  .popover-bottom {
+    margin-top: 20px;
+
+    padding: 0 19px 19px;
+    .img-people {
+      width: 33px;
+    }
+    .bottom-people {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .bottom-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border-radius: 7px;
+      margin-bottom: 8px;
+      .bottom-number {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $white;
+        @include text5;
+      }
+      .bottom-party {
+        @include text5;
+      }
+    }
+    .bottom-vote {
+      color: $black;
+      @include header5;
+    }
+  }
+  .bottom-proportion {
+    display: flex;
+    justify-content: flex-end;
+    img {
+    }
+    .proportion {
+      color: $gray2;
+    }
+    .proportion-up {
+      color: $primary;
+    }
+  }
+  .bottom-percent {
+    color: $black;
+  }
+  .one {
+  }
+  .two {
+  }
+  .three {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: end;
   }
 }
 
