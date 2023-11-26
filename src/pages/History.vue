@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import ScaleBar from '@/components/scaleBar.vue';
 import catImage from '@/assets/images/cat-main.png';
 import dogImage from '@/assets/images/dog-main.png';
@@ -11,6 +11,7 @@ import catBg from '@/assets/images/bg-orange.png';
 import dogBg from '@/assets/images/bg-blue.png';
 import birdBg from '@/assets/images/bg-green.png';
 import { useWindowSizeStore } from '@/stores/windowSize.js';
+import D3Map from '@/components/D3Map.vue';
 
 const windowSizeStore = useWindowSizeStore();
 
@@ -105,8 +106,6 @@ const totalVotes = computed(() => {
 const candidatePercentages = computed(() => {
   return candidate.value.map(item => ((item.vote / totalVotes.value) * 100).toFixed(2));
 });
-
-console.log(candidatePercentages.value);
 
 const winParty = ref('1');
 
@@ -242,6 +241,16 @@ const searchResults = {
 const popoverUP = ref(true);
 
 const popoverProportionUp = ref(true);
+
+const SelectArea = ref([
+  { id: 'J', name: '新竹縣' },
+  { id: 'J14', name: '尖石鄉' }
+]);
+
+const handleUpdateSelectArea = updatedArea => {
+  SelectArea.value = updatedArea;
+  // console.log('傳出來的', SelectArea.value);
+};
 </script>
 
 <template>
@@ -472,7 +481,7 @@ const popoverProportionUp = ref(true);
     <!-- 右邊 -->
     <div class="right">
       <!-- map -->
-      <div></div>
+      <D3Map :initialSelectArea="SelectArea" @updateSelectArea="handleUpdateSelectArea"></D3Map>
     </div>
   </div>
   <!-- 地圖的popover資訊 -->
@@ -507,7 +516,7 @@ const popoverProportionUp = ref(true);
 <style lang="scss" scoped>
 .history-wrapper {
   background-color: $blue-bg;
-  height: 1000px;
+  height: 780px;
   padding: 60px 3%;
   display: flex;
 
@@ -1300,6 +1309,9 @@ const popoverProportionUp = ref(true);
   }
   .right {
     width: 40%;
+    position: fixed;
+    right: 0;
+    max-height: calc(100vh - 160px);
     @include rwd() {
       width: 100%;
     }
