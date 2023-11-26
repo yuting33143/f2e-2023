@@ -242,6 +242,7 @@ const popoverUP = ref(true);
 
 const popoverProportionUp = ref(true);
 
+// TODO: 跟d3互傳的是這個 看在把searchResults的值改成這個之類的 這裡我測試先預設了 你可以刪掉 ㄏ
 const SelectArea = ref([
   { id: 'J', name: '新竹縣' },
   { id: 'J14', name: '尖石鄉' }
