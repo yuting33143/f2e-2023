@@ -4,17 +4,37 @@ import ScaleBar from '@/components/scaleBar.vue';
 import catImage from '@/assets/images/cat-main.png';
 import dogImage from '@/assets/images/dog-main.png';
 import birdImage from '@/assets/images/bird-main.png';
+
+import birdCircle from '@/assets/images/bird-circle.png';
+import catCircle from '@/assets/images/cat-circle.png';
+import dogCircle from '@/assets/images/dog-circle.png';
+
 import catBg from '@/assets/images/bg-orange.png';
 import dogBg from '@/assets/images/bg-blue.png';
 import birdBg from '@/assets/images/bg-green.png';
-import mingcute_search from '@/assets/images/mingcute_search.svg';
 import { useWindowSizeStore } from '@/stores/windowSize.js';
-import SearchDialog from '@/components/SearchDialog.vue';
-import TaiwanMap from '../components/TaiwanMap.vue';
+import { useRegionStore } from '@/stores/regions.js';
+
 
 const windowSizeStore = useWindowSizeStore();
 const isMobile = computed(() => windowSizeStore.width <= 768);
 
+
+// ===================== Pina 控制選票 Data 取得 ===================== //
+const regionStore = useRegionStore();
+
+const handleRegionChange = async (regionID) => {
+  const regionCode = regionStore.regionMap[regionID];
+  if (regionCode) {
+    await regionStore.fetchRegionData(regionCode);
+  } else {
+    console.error('Invalid region name:', regionID);
+  }
+};
+
+
+// ===================== 地圖的popover資訊(在 “搜尋 dialog” 選擇完後顯示資訊) ===================== //
+// 地圖的popover資訊 、people-group 的資料
 const candidate = ref([
   {
     number: '1',
@@ -22,6 +42,7 @@ const candidate = ref([
     vicePresident: '三花',
     party: '貓貓進步黨',
     img: catImage,
+    circleImg: catCircle,
     bg: catBg,
     color: 'orange',
     vote: 8170231
@@ -32,6 +53,7 @@ const candidate = ref([
     vicePresident: '旺福',
     party: '旺星人守護黨',
     img: dogImage,
+    circleImg: dogCircle,
     bg: dogBg,
     color: 'blue',
     vote: 5522119
@@ -42,33 +64,52 @@ const candidate = ref([
     vicePresident: '波波',
     party: '鳥類保育黨',
     img: birdImage,
+    circleImg: birdCircle,
     bg: birdBg,
     color: 'green',
     vote: 608590
   }
 ]);
 
+// 控制顯示 popover
+const popoverUP = ref(true);
+
+// 控制顯示 popover 的 class proportion-up
+const popoverProportionUp = ref(true);
+
+// 計算 popover 的總票數
+const popoverTotalVotes = computed(() => {
+  return candidate.value.reduce((sum, item) => sum + item.vote, 0);
+});
+
+// 計算 popover 的候選人百分比
+const popoverCandidatePercentages = computed(() => {
+  return candidate.value.map(item => ((item.vote / popoverTotalVotes.value) * 100).toFixed(2));
+});
+
 
 const winParty = ref('1');
 
-// search 跳窗
+// ===================== drawer dialog ===================== //
+// 控制 “drawer” 跳窗
 const showDrawer = ref(false);
 
-// 綁定選擇框的選項
-const centerDialogVisible = ref(false);
-const selectedCityCode = ref(null);
-const selectedTownCode = ref(null);
-const selectedVillage = ref(null);
-const cityOptions = ref([]);
-const filteredVillages = ref([]);
-const filteredTowns = ref([]);
-const townsOptions = ref([]);
-const villageOptions = ref([]);
+// “drawer” 選擇框的選中值
+const areaAllSelected = ref(null);
+const areaCitySelected = ref(null);
+const areaTownSelected = ref(null);
+const areaVillageSelected = ref(null);
 
-// 存儲搜索結果的響應式陣列
-const searchResults = ref([]); 
+// “drawer” 選擇框的值（原始值）
+const areaCityOptions = ref([]);
+const areaVillageOptions = ref([]);
+const areaTownOptions = ref([]);
 
+// “drawer” 選擇框的選項（filter）
+const areaFilteredTowns = ref([]);
+const areafilteredVillages = ref([]);
 
+// 顯示 drawer 各縣市 data
 const testCountry = [
   {
     city: '台北市',
@@ -106,93 +147,125 @@ const testCountry = [
     party2: '42',
     party3: '21'
   },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  }
+  
 ];
+// ===================== search dialog ===================== //
+// 控制 ”搜尋“ 顯示
+const centerDialogVisible = ref(false);
+
+// ”搜尋“ 選擇框的選中值
+const selectedCityCode = ref(null);
+const selectedTownCode = ref(null);
+const selectedVillageCode = ref(null);
+
+// ”搜尋“ 選擇框的選項(原始值)
+const cityOptions = ref([]);
+const townsOptions = ref([]);
+const villageOptions = ref([]);
+
+// ”搜尋“ 選擇框的選項（filter）
+const filteredTowns = ref([]);
+const filteredVillages = ref([]);
+
+// 搜索位置
+function searchLocation() {
+  // emit('search', {
+  //   city: selectedCity.value,
+  //   neighborhood: selectedNeighborhood.value,
+  //   village: selectedVillageCode.value
+  // });
+  updateVisible(false);
+}
+
+// 第二區塊 bar 的資料
+const candidateView = ref([
+  {
+    number: '1',
+    party: '貓貓進步黨',
+    img: catCircle,
+    color: "#F5A623",
+    percentage: 0,
+    strokeWidth: 26.5 
+  },
+  {
+    number: '2',
+    party: '旺星人守護黨',
+    img: dogCircle,
+    color: '#4A90E2',
+    percentage: 0,
+    strokeWidth: 26.5 
+  },
+  {
+    number: '3',
+    party: '鳥類保育黨',
+    img: birdCircle,
+    color: '#7ED321',
+    percentage: 0,
+    strokeWidth: 26.5 
+  }
+]);
+
+// 計算總票數
+const totalVotes = computed(() => {
+  return candidateView.value.reduce((sum, item) => sum + item.percentage, 0);
+});
+
+// 計算候選人得票率
+const candidatePercentages = computed(() => {
+  
+  return candidateView.value.map(item => ({
+    ...item,
+    value: Number(((item.percentage / totalVotes.value) * 100).toFixed(2))
+  }));
+});
+
+// 處理 選票資料格式
+const processVoitData = (jsonData) => {
+  // 確保 jsonData 是一個陣列
+  if (!Array.isArray(jsonData)) {
+    console.error("jsonData is not an array");
+    return;
+  }
+
+  console.log(jsonData);
+  let TotalVotes = {};
+  let districtVotes = {};
+
+  const validData = jsonData.filter(item => (item != null || undefined) && (item['第15任總統副總統選舉候選人得票數一覽表'] !== '行政區別')); // 排除 null 和 undefined 值
+  console.log(validData);
+  // 處理總票數
+  const totalVoteEntry = validData.find(item => item && item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計');
+  if (totalVoteEntry) {
+
+    TotalVotes = {
+        candidate1: parseInt(totalVoteEntry.Column2 ? totalVoteEntry.Column2.replace(/,/g, '') : 0),
+        candidate2: parseInt(totalVoteEntry.Column3 ? totalVoteEntry.Column3.replace(/,/g, '') : 0),
+        candidate3: parseInt(totalVoteEntry.Column4 ? totalVoteEntry.Column4.replace(/,/g, '') : 0)
+    };
+    console.log(TotalVotes);
+  }
+
+  // 處理各地區票數
+  validData.forEach(item => {
+    if (item && item['第15任總統副總統選舉候選人得票數一覽表'] && !item['第15任總統副總統選舉候選人得票數一覽表'].includes('總　計'|| '行政區別')) {
+      const district = item['第15任總統副總統選舉候選人得票數一覽表'].trim();
+      districtVotes[district] = {
+        candidate1: parseInt(item.Column2 ? item.Column2.replace(/,/g, '') : 0),
+        candidate2: parseInt(item.Column3 ? item.Column3.replace(/,/g, ''): 0),
+        candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, ''): 0)
+      };
+    }
+  });
+  console.log(TotalVotes, districtVotes);
+
+  return { TotalVotes, districtVotes };
+};
 
 
+
+
+
+// ==================== 取得坐標資料 ==================== // 
 // 取得 市/縣 選項
 const COUNTY_FETCH = async () => {
   try {
@@ -225,48 +298,79 @@ const TOWN_FETCH = async () => {
         NAME: element.properties.TOWNNAME,
       }
     });
-    console.log(townsOptions.value);
   } catch (error) {
     console.error('失敗:', error);
   }
 };
 
 // 取得 村里 選項
-const VILLAGE_FETCH = async () => {
-  try {
-    const response = await fetch('/map/VILLAGE_NLSC_121_1120928.json');
-    const jsonData = await response.json();
-    villageOptions.value = jsonData.features.map(element => {
-      return {
-        ID: element.properties.VILLAGECODE,
-        CODE: element.properties.VILLAGECODE,
-        NAME: element.properties.VILLAGENAME,
-      }
-    });
-    console.log(villageOptions.value);
-  } catch (error) {
-    console.error('失敗:', error);
-  }
-};
+// const VILLAGE_FETCH = async () => {
+//   try {
+//     const response = await fetch('/map/VILLAGE_NLSC_121_1120928.json');
+//     const jsonData = await response.json();
+//     villageOptions.value = jsonData.features.map(element => {
+//       return {
+//         ID: element.properties.VILLAGECODE,
+//         CODE: element.properties.VILLAGECODE,
+//         NAME: element.properties.VILLAGENAME,
+//       }
+//     });
+//     console.log(villageOptions.value);
+//   } catch (error) {
+//     console.error('失敗:', error);
+//   }
+// };
 
 // 選擇縣市時，過濾出該縣市的鄉鎮市區
-const onCityChange = (cityCode) => {
-  filteredTowns.value = townsOptions.value.filter(item => item.CODE.substring(0, 5) === cityCode);
+const onCityChange = (cityID) => {
+  filteredTowns.value = townsOptions.value.filter(item => item.ID === cityID);
   selectedTownCode.value = null;
   filteredVillages.value = [];
 };
 
 // 選擇鄉鎮市區時，過濾出該鄉鎮市區的村里
-const onTownChange = (townCode) => {
-  filteredVillages.value = villageOptions.value.filter(item => item.CODE.substring(0, 5) === townCode);
-  selectedVillage.value = null;
+const onTownChange = (townID) => {
+  filteredVillages.value = villageOptions.value.filter(item => item.ID === townID);
+  selectedVillageCode.value = null;
 };
+// ==================== Data View ==================== //
 
+// console.log(regionStore.originData);
 // hook mounted
 onMounted(async () => {
-  await COUNTY_FETCH();
+  // await PRESIDENTIAL_FETCH_2022_ALL(); // 取得 2020 總統大選 全國各縣市得票數
+
+  // 2020 總統大選 全國各縣市得票數
+  const allData = await regionStore.fetchRegionData('ALL'); // 取得 2020 總統大選 全國各縣市得票數
+
+  console.log(allData);
+  // 處理 2020 總統大選 全國各縣市得票數
+  const { TotalVotes, districtVotes } = processVoitData(allData);
+  
+  candidate.value.map(
+    (item, index) => {
+      item.vote = TotalVotes[`candidate${index + 1}`];
+      item.districtVotes = districtVotes;
+    }
+  )
+  console.log(candidate.value);
+  
+  // 使用 TotalVotes
+  console.log("總票數：", TotalVotes);
+
+  // 使用 districtVotes
+  console.log("各地區票數：", districtVotes);
+
+  // ex: 取得臺北市票數
+  // if (districtVotes['臺北市']) {
+  //   console.log("臺北市票數：", districtVotes['臺北市']);
+  // }
+
+  // 取得 市/縣 坐標選項
+  await COUNTY_FETCH(); 
+
+  // 取得 鄉鎮市區 坐標選項
   await TOWN_FETCH();
-  await VILLAGE_FETCH();
 });
 
 // 搜尋位置的 dialog
@@ -274,15 +378,6 @@ const openDialog = () => {
   centerDialogVisible.value = true;
 };
 
-// 搜索位置
-function searchLocation() {
-  // emit('search', {
-  //   city: selectedCity.value,
-  //   neighborhood: selectedNeighborhood.value,
-  //   village: selectedVillage.value
-  // });
-  updateVisible(false);
-}
 </script>
 
 <template>
@@ -308,36 +403,37 @@ function searchLocation() {
         <!-- drawer 測試按鈕 -->
         <el-button class="onDrawer" @click="showDrawer = true">onDrawer</el-button>
 
+        <!-- 搜尋 dialog -->
         <el-dialog dialog v-model="centerDialogVisible" title="搜尋" width="30%" center>
           <span>
             <!-- city select -->
-            <el-select v-model="selectedCityCode" :placeholder="$t('current.selectCityPlaceholder')" @change="onCityChange">
+            <el-select v-model="selectedCityCode" :placeholder="$t('current.selectCityPlaceholder')" @change="onCityChange, handleRegionChange">
               <el-option
                 v-for="item in cityOptions"
                 :key="item.ID"
                 :label="item.NAME"
-                :value="item.CODE"
+                :value="item.ID"
               />
             </el-select>
             
             <!-- townsOptions select -->
-            <el-select v-model="selectedTownCode" :placeholder="$t('current.selectNeighborhoodPlaceholder')" @change="onTownChange">
+            <el-select v-model="selectedTownCode" :placeholder="$t('current.selectNeighborhoodPlaceholder')" @change="onTownChange, handleRegionChange">
               <el-option
                 v-for="item in filteredTowns"
                 :key="item.ID"
                 :label="item.NAME"
-                :value="item.CODE"
+                :value="item.ID"
               />
             </el-select>
             
             <!-- village select -->
-            <el-select v-model="filteredVillages" :placeholder="$t('current.selectVillagePlaceholder')">
+            <!-- <el-select v-model="filteredVillages" :placeholder="$t('current.selectVillagePlaceholder')">
               <el-option
                 v-for="item in villageOptions"
                 :label="item.NAME"
                 :value="item.CODE"
               />
-            </el-select>
+            </el-select> -->
           </span>
           
           <!-- 底部按钮 -->
@@ -398,20 +494,80 @@ function searchLocation() {
       </div>
 
       <!-- 投票總覽 -->
-      <div class="voitView">
-        <div class="icon"></div>
-        <div class="voitView__content">
-          <div class="title"></div>
-          <div class="bar"></div>
+      <div class="voitView" v-if="!isMobile">
+        <div class="voitView__item"
+          v-for="(item, index) in candidatePercentages"
+          :key="index"
+          :class="`bg-${item.color}`"
+        >
+          <img class="item__people" :src="item.img" :alt="item.img">
+          <div class="item__content">
+            <!-- 黨派 -->
+            <div class="content__title">
+              <span class="number" :style="`background-color: ${item.color}`">{{ item.number}}</span>
+              <p class="party">{{ item.party }}</p>
+            </div>
+
+            <!-- 量表/票數 -->
+            <div class="content__bar">
+              <!-- bar 圖 -->
+              <div class="progress">
+                <el-progress
+                  :key="item.id"
+                  :percentage="item.value"
+                  :color="item.color"
+                  :format="() => `${item.percentage.toLocaleString()}票`"
+                  :stroke-width="item.strokeWidth || 20"
+                ></el-progress>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      
+
+      <!-- 投票總覽 移動端 -->
+      <div class="voitView voitView--isMobile" v-if="isMobile">
+        <div class="voitView__item"
+          v-for="(item, index) in candidatePercentages"
+          :key="index"
+          :class="`bg-${item.color}`"
+        >
+          
+          <div class="item__content">
+            <!-- 黨派 -->
+            <div class="content__title">
+              <img class="item__people" :src="item.img" :alt="item.img">
+              <span class="number" :style="`background-color: ${item.color}`">{{ item.number}}</span>
+              <p class="party">{{ item.party }}</p>
+            </div>
+
+            <!-- 量表/票數 -->
+            <div class="content__bar">
+              <!-- bar 圖 -->
+              <div class="progress">
+                <el-progress
+                  :key="item.id"
+                  :percentage="item.value"
+                  :color="item.color"
+                  :format="() => `${item.percentage.toLocaleString()}票`"
+                  :stroke-width="item.strokeWidth || 20"
+                ></el-progress>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- drawer -->
-      <el-drawer v-model="showDrawer" direction="ltr" size="100%" class="nav-dialog">
-
-        <template #close>
-          <div class="custom-close-icon">
+      <el-drawer
+          v-model="showDrawer"
+          direction="ltr"
+          :with-header="false"
+          size="50%"
+          class="nav-dialog"
+        >
+        <!-- close -->
+        <div class="custom-close-icon" @click="showDrawer = false">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
               <g clip-path="url(#clip0_200_5457)">
                 <path d="M16 38C16 36.516 14.534 34.3 13.05 32.44C11.142 30.04 8.862 27.946 6.248 26.348C4.288 25.15 1.912 24 1.66948e-07 24M1.66948e-07 24C1.912 24 4.29 22.85 6.248 21.652C8.862 20.052 11.142 17.958 13.05 15.562C14.534 13.7 16 11.48 16 10M1.66948e-07 24L48 24" stroke="#2B2B2D" stroke-width="3"/>
@@ -422,33 +578,43 @@ function searchLocation() {
                 </clipPath>
               </defs>
             </svg>
-          </div>
-        </template>
+        </div>
 
         <template #header>
           <div class="custom-header">
             <div class="title">選區查詢</div>
           </div>
-          <!-- <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <g clip-path="url(#clip0_200_5457)">
-              <path d="M16 38C16 36.516 14.534 34.3 13.05 32.44C11.142 30.04 8.862 27.946 6.248 26.348C4.288 25.15 1.912 24 1.66948e-07 24M1.66948e-07 24C1.912 24 4.29 22.85 6.248 21.652C8.862 20.052 11.142 17.958 13.05 15.562C14.534 13.7 16 11.48 16 10M1.66948e-07 24L48 24" stroke="#2B2B2D" stroke-width="3"/>
-            </g>
-            <defs>
-              <clipPath id="clip0_200_5457">
-                <rect width="48" height="48" fill="white" transform="translate(0 48) rotate(-90)"/>
-              </clipPath>
-            </defs>
-          </svg> -->
         </template>
         
         <div class="dialog-content">
           <!-- 左邊全區scalebar(各區票數) -->
           <div class="area-wrapper">
             <div class="search">
-                <el-button class="all-btn">全臺</el-button>
-                <el-select class="city-select" placeholder="縣市"></el-select>
-                <el-select class="area-select" placeholder="選擇鄉鎮區"></el-select>
-                <el-select class="unit-select" placeholder="選擇里"></el-select>
+                <el-button v-model="areaAllSelected" class="all-btn">全臺</el-button>
+                <el-select v-model="areaCitySelected" class="city-select" placeholder="縣市">
+                  <el-option
+                    v-for="item in areaCityOptions"
+                    :key="item.ID"
+                    :label="item.NAME"
+                    :value="item.CODE"
+                  />
+                </el-select>
+                <el-select v-model="areaTownSelected" class="area-select" placeholder="選擇鄉鎮區">
+                  <el-option
+                    v-for="item in areaFilteredTowns"
+                    :key="item.ID"
+                    :label="item.NAME"
+                    :value="item.CODE"
+                  />
+                </el-select>
+                <el-select v-model="areaVillageSelected" class="unit-select" placeholder="選擇里">
+                  <el-option
+                    v-for="item in areafilteredVillages"
+                    :key="item.ID"
+                    :label="item.NAME"
+                    :value="item.CODE"
+                  />
+                </el-select>
             </div>
 
             <div class="area area-left">
@@ -490,13 +656,41 @@ function searchLocation() {
           </div>
         </div>
       </el-drawer>
+
+      <!-- 地圖的popover資訊 -->
+      <div class="popover">
+        <div class="popover-top">
+          <div class="popover-area">台北市士林區</div>
+        </div>
+        <div class="popover-bottom">
+          <div class="bottom-people" v-for="(item, index) in candidate" :key="index">
+            <div class="one">
+              <img class="img-people" :src="item.circleImg" alt="" />
+            </div>
+            <div class="two">
+              <div class="bottom-title" :class="`bg-${item.color}-light`">
+                <div class="bottom-number" :class="`bg-${item.color}`">{{ item.number }}</div>
+                <div class="bottom-party" :class="`text-${item.color}`">{{ item.party }}</div>
+              </div>
+              <div class="bottom-vote">{{ item.vote }}票</div>
+            </div>
+            <div class="three">
+              <div class="bottom-proportion">
+                <img v-if="popoverUP" src="@/assets/images/icon/raise.png" />
+                <img v-else src="@/assets/images/icon/decline.png" />
+                <div class="proportion" :class="{ 'proportion-up': popoverProportionUp }">4.2%</div>
+              </div>
+              <div class="bottom-percent">{{ popoverCandidatePercentages[index] }}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 右邊 -->
     <div class="right">
       <!-- map -->
       <div>
-        <TaiwanMap/>
       </div>
     </div>
   </div>
@@ -744,6 +938,66 @@ function searchLocation() {
           }
     }
 
+    .voitView {
+      @include flex-setting($direction: column, $align: flex-start);
+      background-color: $white;
+      margin-top: 40px;
+      border-radius: 20px;
+      padding: 16px 19px 14px;
+
+      @include pad() {
+        width: calc(100% - 6% - 17px);
+      }
+      .voitView__item {
+        @include flex-setting($justify: flex-start, $align: flex-end);
+        width: 100%;
+        padding: 19px 0px 9px;
+        border-bottom: 1px solid #F5F5F5;
+        gap: 30px;
+        .item__content {
+          @include flex-setting($direction: column, $align: flex-start);
+          width: 630px;
+
+          .content__title {
+            @include flex-setting;
+            @include text4;
+            gap: 12px;
+            .number {
+              @include flex-setting;
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              color: #FFF;
+              font-size: 16px;
+              font-weight: 700;
+            }
+          }
+          .content__bar {
+            width: 100%;
+            @include flex-setting;
+
+            .progress {
+              
+              width: 100%;
+              .el-progress {
+                @include header6;
+                color: #282D3A;
+                gap: 16px;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .voitView--isMobile {
+      .voitView__item {
+        .item__content {
+          @include flex-setting($direction: column, $align: flex-start);
+        }
+      }
+    } 
+    
 
   }
 
@@ -757,6 +1011,10 @@ function searchLocation() {
 
 .nav-dialog {
   background: $white !important;
+  
+  .custom-close-icon {
+    cursor: pointer;
+  }
   .el-drawer__close-btn {
     display: none;
     .el-icon {
@@ -919,6 +1177,89 @@ function searchLocation() {
   }
 }
 
+.popover {
+  width: 308px;
+  height: 350px;
+  background-color: $white;
+  box-shadow: 0px 4px 20px 0px rgba(174, 174, 174, 0.2);
+  border-radius: 20px;
+  box-sizing: border-box;
+  .popover-top {
+    border-radius: 20px;
+    background-color: $black;
+    height: 56px;
+    color: $white;
+    @include header6;
+    display: flex;
+    align-items: center;
+    padding: 0 26px;
+  }
+  .popover-bottom {
+    margin-top: 20px;
+
+    padding: 0 19px 19px;
+    .img-people {
+      width: 33px;
+    }
+    .bottom-people {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .bottom-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border-radius: 7px;
+      margin-bottom: 8px;
+      .bottom-number {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $white;
+        @include text5;
+      }
+      .bottom-party {
+        @include text5;
+      }
+    }
+    .bottom-vote {
+      color: $black;
+      @include header5;
+    }
+  }
+  .bottom-proportion {
+    display: flex;
+    justify-content: flex-end;
+    img {
+    }
+    .proportion {
+      color: $gray2;
+    }
+    .proportion-up {
+      color: $primary;
+    }
+  }
+  .bottom-percent {
+    color: $black;
+  }
+  .one {
+  }
+  .two {
+  }
+  .three {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: end;
+  }
+}
 
 .bg-orange-light {
   background-color: $orange-light !important;
