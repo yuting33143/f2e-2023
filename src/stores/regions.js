@@ -4,6 +4,8 @@ import { defineStore } from 'pinia';
 export const useRegionStore = defineStore('region', {
   state: () => ({
     originData: {},
+    totalVotes: {},
+    districtVotes: {},
 
     // 選區代碼對應表
     regionMap: {
@@ -60,6 +62,63 @@ export const useRegionStore = defineStore('region', {
         this.error = error.toString(); // 存儲錯誤信息
         console.error('Error fetching region data:', error);
       }
+    },
+
+    // 處理 選票資料格式
+    processVoitData(jsonData) {
+      // 確保 jsonData 是一個陣列
+      if (!Array.isArray(jsonData)) {
+        console.error('jsonData is not an array');
+        return;
+      }
+
+      console.log(jsonData);
+      let TotalVotes = {};
+      let districtVotes = {};
+
+      const validData = jsonData.filter(
+        item =>
+          (item != null || undefined) &&
+          item['第15任總統副總統選舉候選人得票數一覽表'] !== '行政區別'
+      ); // 排除 null 和 undefined 值
+      console.log(validData);
+      // 處理總票數
+      const totalVoteEntry = validData.find(
+        item => item && item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計'
+      );
+      if (totalVoteEntry) {
+        TotalVotes = {
+          candidate1: parseInt(
+            totalVoteEntry.Column2 ? totalVoteEntry.Column2.replace(/,/g, '') : 0
+          ),
+          candidate2: parseInt(
+            totalVoteEntry.Column3 ? totalVoteEntry.Column3.replace(/,/g, '') : 0
+          ),
+          candidate3: parseInt(
+            totalVoteEntry.Column4 ? totalVoteEntry.Column4.replace(/,/g, '') : 0
+          )
+        };
+        console.log(TotalVotes);
+      }
+
+      // 處理各地區票數
+      validData.forEach(item => {
+        if (
+          item &&
+          item['第15任總統副總統選舉候選人得票數一覽表'] &&
+          !item['第15任總統副總統選舉候選人得票數一覽表'].includes('總　計' || '行政區別')
+        ) {
+          const district = item['第15任總統副總統選舉候選人得票數一覽表'].trim();
+          districtVotes[district] = {
+            candidate1: parseInt(item.Column2 ? item.Column2.replace(/,/g, '') : 0),
+            candidate2: parseInt(item.Column3 ? item.Column3.replace(/,/g, '') : 0),
+            candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, '') : 0)
+          };
+        }
+      });
+      console.log(TotalVotes, districtVotes);
+
+      return { TotalVotes, districtVotes };
     }
   }
 });
