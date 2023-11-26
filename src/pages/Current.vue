@@ -81,11 +81,12 @@ const popoverProportionUp = ref(true);
 const popoverTotalVotes = computed(() => {
   return candidate.value.reduce((sum, item) => sum + item.vote, 0);
 });
-
+console.log(popoverTotalVotes.value);
 // 計算 popover 的候選人百分比
 const popoverCandidatePercentages = computed(() => {
   return candidate.value.map(item => ((item.vote / popoverTotalVotes.value) * 100).toFixed(2));
 });
+console.log(popoverCandidatePercentages.value);
 
 
 const winParty = ref('1');
@@ -102,7 +103,7 @@ const areaVillageSelected = ref(null);
 
 // “drawer” 選擇框的值（原始值）
 const areaCityOptions = ref([]);
-const areaVillageOptions = ref([]);
+// const areaVillageOptions = ref([]);
 const areaTownOptions = ref([]);
 
 // “drawer” 選擇框的選項（filter）
@@ -161,7 +162,7 @@ const selectedVillageCode = ref(null);
 // ”搜尋“ 選擇框的選項(原始值)
 const cityOptions = ref([]);
 const townsOptions = ref([]);
-const villageOptions = ref([]);
+// const villageOptions = ref([]);
 
 // ”搜尋“ 選擇框的選項（filter）
 const filteredTowns = ref([]);
@@ -184,7 +185,7 @@ const candidateView = ref([
     party: '貓貓進步黨',
     img: catCircle,
     color: "#F5A623",
-    percentage: 0,
+    vote: 5522119,
     strokeWidth: 26.5 
   },
   {
@@ -192,7 +193,7 @@ const candidateView = ref([
     party: '旺星人守護黨',
     img: dogCircle,
     color: '#4A90E2',
-    percentage: 0,
+    vote: 5522119,
     strokeWidth: 26.5 
   },
   {
@@ -200,24 +201,45 @@ const candidateView = ref([
     party: '鳥類保育黨',
     img: birdCircle,
     color: '#7ED321',
-    percentage: 0,
+    vote: 5522119,
     strokeWidth: 26.5 
   }
 ]);
 
 // 計算總票數
 const totalVotes = computed(() => {
-  return candidateView.value.reduce((sum, item) => sum + item.percentage, 0);
+  return candidateView.value.reduce((sum, item) => sum + item.vote, 0);
 });
 
-// 計算候選人得票率
+
 const candidatePercentages = computed(() => {
   
   return candidateView.value.map(item => ({
     ...item,
-    value: Number(((item.percentage / totalVotes.value) * 100).toFixed(2))
+    value: Number(((item.vote / totalVotes.value) * 100).toFixed(2))
   }));
 });
+
+console.log(candidatePercentages.value);
+// 計算候選人得票率
+// const candidatePercentages = computed(() => {
+//   return candidateView.value.map(item => {
+//     // 确保 percentage 和 totalVotes 是有效数字
+//     const validPercentage = isNaN(item.percentage) ? 0 : item.percentage;
+//     const validTotalVotes = isNaN(totalVotes.value) || totalVotes.value === 0 ? 1 : totalVotes.value;
+
+//     console.log(validPercentage);
+//     console.log(validTotalVotes);
+//     // 计算得票率
+//     const percentageValue = Number(((validPercentage / validTotalVotes) * 100).toFixed(2));
+//     return {
+//       ...item,
+//       value: isNaN(percentageValue) ? 0 : percentageValue
+//     };
+//   });
+// });
+
+
 
 // 處理 選票資料格式
 const processVoitData = (jsonData) => {
@@ -260,9 +282,6 @@ const processVoitData = (jsonData) => {
 
   return { TotalVotes, districtVotes };
 };
-
-
-
 
 
 // ==================== 取得坐標資料 ==================== // 
@@ -328,11 +347,17 @@ const onCityChange = (cityID) => {
   filteredVillages.value = [];
 };
 
-// 選擇鄉鎮市區時，過濾出該鄉鎮市區的村里
-const onTownChange = (townID) => {
-  filteredVillages.value = villageOptions.value.filter(item => item.ID === townID);
-  selectedVillageCode.value = null;
+// // 選擇鄉鎮市區時，過濾出該鄉鎮市區的村里
+// const onTownChange = (townID) => {
+//   filteredVillages.value = villageOptions.value.filter(item => item.ID === townID);
+//   selectedVillageCode.value = null;
+// };
+
+// 搜尋位置的 dialog
+const openDialog = () => {
+  centerDialogVisible.value = true;
 };
+
 // ==================== Data View ==================== //
 
 // console.log(regionStore.originData);
@@ -345,7 +370,7 @@ onMounted(async () => {
 
   console.log(allData);
   // 處理 2020 總統大選 全國各縣市得票數
-  const { TotalVotes, districtVotes } = processVoitData(allData);
+  const { TotalVotes, districtVotes } = regionStore.processVoitData(allData);
   
   candidate.value.map(
     (item, index) => {
@@ -353,13 +378,20 @@ onMounted(async () => {
       item.districtVotes = districtVotes;
     }
   )
-  console.log(candidate.value);
+  candidateView.value.map(
+    (item, index) => {
+      item.vote = TotalVotes[`candidate${index + 1}`];
+      item.districtVotes = districtVotes;
+    }
+  )
+  // console.log(candidate.value);
+  // console.log(candidateView.value);
   
   // 使用 TotalVotes
-  console.log("總票數：", TotalVotes);
+  // console.log("總票數：", TotalVotes);
 
   // 使用 districtVotes
-  console.log("各地區票數：", districtVotes);
+  // console.log("各地區票數：", districtVotes);
 
   // ex: 取得臺北市票數
   // if (districtVotes['臺北市']) {
@@ -373,10 +405,7 @@ onMounted(async () => {
   await TOWN_FETCH();
 });
 
-// 搜尋位置的 dialog
-const openDialog = () => {
-  centerDialogVisible.value = true;
-};
+
 
 </script>
 
@@ -526,7 +555,7 @@ const openDialog = () => {
                   :key="item.id"
                   :percentage="item.value"
                   :color="item.color"
-                  :format="() => `${item.percentage.toLocaleString()}票`"
+                  :format="() => `${item.vote.toLocaleString()}票`"
                   :stroke-width="item.strokeWidth || 20"
                 ></el-progress>
               </div>
