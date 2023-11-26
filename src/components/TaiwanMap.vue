@@ -20,7 +20,7 @@ setup() {
 
     const drawMap = async () => {
         // 加載 GeoJSON 數據
-        const taiwanGeoJSON = await d3.json('/map/taiwanMap.json');
+        const taiwanGeoJSON = await d3.json('/map/COUNTY_MOI_1090820.json');
 
         // 創建投影
         const projection = d3.geoMercator()
