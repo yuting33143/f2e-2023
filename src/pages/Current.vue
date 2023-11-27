@@ -138,7 +138,7 @@ const testCountry = [
 ];
 // ===================== search dialog ===================== //
 // 控制 ”搜尋“ 顯示
-const centerDialogVisible = ref(false);
+const centerDialogVisible = ref(true);
 
 // ”搜尋“ 選擇框的選中值
 const selectedCityCode = ref(null);
@@ -206,8 +206,7 @@ function _updateCandidatesVotes(candidates, totalVotes, districtVotes) {
 }
 
 // mounted 時取得縣市資料
-const handleRegionChange = async (regionValue) => {
-
+const handleRegionChange = async regionValue => {
   const letterPart = regionValue && regionValue.slice(0, 1);
   const regionCode = regionStore.regionMap[letterPart];
 
@@ -421,8 +420,9 @@ const handleUpdateSelectArea = updatedArea => {
         <el-button class="onDrawer" @click="showDrawer = true">onDrawer</el-button>
 
         <!-- 搜尋 dialog -->
-        <el-dialog dialog v-model="centerDialogVisible" title="搜尋" width="30%" center>
-          <span>
+        <el-dialog dialog v-model="centerDialogVisible" center v-if="isMobile">
+          <div class="dialog-wrapper">
+            <div class="title-dialog">搜尋區域</div>
             <!-- city select -->
             <el-select
               v-model="selectedCityCode"
@@ -450,14 +450,11 @@ const handleUpdateSelectArea = updatedArea => {
                 :value="item.ID"
               />
             </el-select>
-          </span>
-
-          <!-- 底部按钮 -->
-          <template #footer>
-            <span class="dialog-footer">
-              <el-button type="primary" @click="searchLocation">搜尋</el-button>
-            </span>
-          </template>
+            <!-- 底部按钮 -->
+            <div class="dialog-footer">
+              <el-button class="btn" type="primary" @click="searchLocation">搜尋</el-button>
+            </div>
+          </div>
         </el-dialog>
       </div>
 
@@ -535,7 +532,12 @@ const handleUpdateSelectArea = updatedArea => {
                   :key="item.id || index"
                   :percentage="item.value || 0"
                   :color="item.color || '#4F8AAB'"
-                  :format="() => item.vote != null && !isNaN(item.vote) ? `${item.vote.toLocaleString()}票` : '0票'"
+                  :format="
+                    () =>
+                      item.vote != null && !isNaN(item.vote)
+                        ? `${item.vote.toLocaleString()}票`
+                        : '0票'
+                  "
                   :stroke-width="item.strokeWidth || 20"
                 ></el-progress>
               </div>
@@ -571,7 +573,12 @@ const handleUpdateSelectArea = updatedArea => {
                   :key="item.id || index"
                   :percentage="item.value || 0"
                   :color="item.color || '#4F8AAB'"
-                  :format="() => item.vote != null && !isNaN(item.vote) ? `${item.vote.toLocaleString()}票` : '0票'"
+                  :format="
+                    () =>
+                      item.vote != null && !isNaN(item.vote)
+                        ? `${item.vote.toLocaleString()}票`
+                        : '0票'
+                  "
                   :stroke-width="item.strokeWidth || 20"
                 ></el-progress>
               </div>
@@ -587,6 +594,7 @@ const handleUpdateSelectArea = updatedArea => {
         :with-header="false"
         size="50%"
         class="nav-dialog"
+        v-if="!isMobile"
       >
         <!-- close -->
         <div class="custom-close-icon" @click="showDrawer = false">
@@ -1060,7 +1068,8 @@ const handleUpdateSelectArea = updatedArea => {
       color: $white;
     }
   }
-  header.el-dialog__header:deep {
+
+  :deep(.el-dialog__header) {
     flex-direction: column-reverse;
     align-items: flex-start;
     color: #282d3a;
@@ -1308,5 +1317,58 @@ const handleUpdateSelectArea = updatedArea => {
 }
 .bg-green-light {
   background-color: $green-light !important;
+}
+
+:deep(.el-dialog) {
+  width: 100%;
+  height: 100%;
+  // margin: auto;
+  background-color: rgba(255, 255, 255, 0.95);
+  margin-top: 0;
+  margin-bottom: 0;
+
+  .dialog-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .el-dialog__body {
+    padding: 20% 20%;
+    margin-top: 5%;
+
+    @include mobile {
+      padding: 30% 15%;
+    }
+  }
+  .title-dialog {
+    text-align: center;
+    color: $black;
+    @include header4;
+  }
+  .el-select {
+    width: 100%;
+  }
+  .dialog-footer {
+    width: 100%;
+    margin-top: 30px;
+    .btn {
+      width: 100%;
+      background-color: $primary !important;
+      font-size: 18px !important;
+      font-weight: 700 !important;
+
+      &:hover {
+        background-color: $secondary !important;
+      }
+    }
+  }
+  .el-dialog__close {
+    color: $black;
+    font-size: 20px;
+  }
+  .el-dialog__header {
+    height: 30px;
+  }
 }
 </style>
