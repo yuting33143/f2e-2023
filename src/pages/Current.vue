@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import ScaleBar from '@/components/scaleBar.vue';
 import catImage from '@/assets/images/cat-main.png';
 import dogImage from '@/assets/images/dog-main.png';
@@ -21,12 +21,30 @@ const isMobile = computed(() => windowSizeStore.width <= 768);
 // ===================== Pina 控制選票 Data 取得 ===================== //
 const regionStore = useRegionStore();
 
-const handleRegionChange = async regionID => {
-  const regionCode = regionStore.regionMap[regionID];
+const handleRegionChange = async (regionValue) => {
+  const letterPart = regionValue && regionValue.slice(0, 1) ; // 只取第一個字
+  const regionCode = regionStore.regionMap[letterPart];
+  
   if (regionCode) {
-    await regionStore.fetchRegionData(regionCode);
+    const allData = await regionStore.fetchRegionData(regionCode);
+    const { TotalVotes, districtVotes } = regionStore.processVoitData(allData);
+    
+    candidate.value.map(
+      (item, index) => {
+        item.vote = TotalVotes[`candidate${index + 1}`];
+        item.districtVotes = districtVotes;
+      }
+    )
+    
+    candidateView.value.map(
+      (item, index) => {
+        item.vote = TotalVotes[`candidate${index + 1}`];
+        item.districtVotes = districtVotes;
+      }
+    )
+    console.log(candidateView.value);
   } else {
-    console.error('Invalid region name:', regionID);
+    console.error('Invalid region name:', letterPart);
   }
 };
 
@@ -78,12 +96,11 @@ const popoverProportionUp = ref(true);
 const popoverTotalVotes = computed(() => {
   return candidate.value.reduce((sum, item) => sum + item.vote, 0);
 });
-console.log(popoverTotalVotes.value);
+
 // 計算 popover 的候選人百分比
 const popoverCandidatePercentages = computed(() => {
   return candidate.value.map(item => ((item.vote / popoverTotalVotes.value) * 100).toFixed(2));
 });
-console.log(popoverCandidatePercentages.value);
 
 const winParty = ref('1');
 
@@ -152,26 +169,17 @@ const centerDialogVisible = ref(false);
 // ”搜尋“ 選擇框的選中值
 const selectedCityCode = ref(null);
 const selectedTownCode = ref(null);
-const selectedVillageCode = ref(null);
 
 // ”搜尋“ 選擇框的選項(原始值)
 const cityOptions = ref([]);
 const townsOptions = ref([]);
-// const villageOptions = ref([]);
 
 // ”搜尋“ 選擇框的選項（filter）
 const filteredTowns = ref([]);
 const filteredVillages = ref([]);
 
-// 搜索位置
-function searchLocation() {
-  // emit('search', {
-  //   city: selectedCity.value,
-  //   neighborhood: selectedNeighborhood.value,
-  //   village: selectedVillageCode.value
-  // });
-  updateVisible(false);
-}
+const selectedTownNAME = ref(null);
+const selectedCityNAME = ref(null);
 
 // 第二區塊 bar 的資料
 const candidateView = ref([
@@ -215,75 +223,8 @@ const candidatePercentages = computed(() => {
 });
 
 console.log(candidatePercentages.value);
-// 計算候選人得票率
-// const candidatePercentages = computed(() => {
-//   return candidateView.value.map(item => {
-//     // 确保 percentage 和 totalVotes 是有效数字
-//     const validPercentage = isNaN(item.percentage) ? 0 : item.percentage;
-//     const validTotalVotes = isNaN(totalVotes.value) || totalVotes.value === 0 ? 1 : totalVotes.value;
 
-//     console.log(validPercentage);
-//     console.log(validTotalVotes);
-//     // 计算得票率
-//     const percentageValue = Number(((validPercentage / validTotalVotes) * 100).toFixed(2));
-//     return {
-//       ...item,
-//       value: isNaN(percentageValue) ? 0 : percentageValue
-//     };
-//   });
-// });
-
-// 處理 選票資料格式
-const processVoitData = jsonData => {
-  // 確保 jsonData 是一個陣列
-  if (!Array.isArray(jsonData)) {
-    console.error('jsonData is not an array');
-    return;
-  }
-
-  console.log(jsonData);
-  let TotalVotes = {};
-  let districtVotes = {};
-
-  const validData = jsonData.filter(
-    item =>
-      (item != null || undefined) && item['第15任總統副總統選舉候選人得票數一覽表'] !== '行政區別'
-  ); // 排除 null 和 undefined 值
-  console.log(validData);
-  // 處理總票數
-  const totalVoteEntry = validData.find(
-    item => item && item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計'
-  );
-  if (totalVoteEntry) {
-    TotalVotes = {
-      candidate1: parseInt(totalVoteEntry.Column2 ? totalVoteEntry.Column2.replace(/,/g, '') : 0),
-      candidate2: parseInt(totalVoteEntry.Column3 ? totalVoteEntry.Column3.replace(/,/g, '') : 0),
-      candidate3: parseInt(totalVoteEntry.Column4 ? totalVoteEntry.Column4.replace(/,/g, '') : 0)
-    };
-    console.log(TotalVotes);
-  }
-
-  // 處理各地區票數
-  validData.forEach(item => {
-    if (
-      item &&
-      item['第15任總統副總統選舉候選人得票數一覽表'] &&
-      !item['第15任總統副總統選舉候選人得票數一覽表'].includes('總　計' || '行政區別')
-    ) {
-      const district = item['第15任總統副總統選舉候選人得票數一覽表'].trim();
-      districtVotes[district] = {
-        candidate1: parseInt(item.Column2 ? item.Column2.replace(/,/g, '') : 0),
-        candidate2: parseInt(item.Column3 ? item.Column3.replace(/,/g, '') : 0),
-        candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, '') : 0)
-      };
-    }
-  });
-  console.log(TotalVotes, districtVotes);
-
-  return { TotalVotes, districtVotes };
-};
-
-// ==================== 取得坐標資料 ==================== //
+// ==================== 取得坐標資料 ==================== // 
 // 取得 市/縣 選項
 const COUNTY_FETCH = async () => {
   try {
@@ -321,36 +262,47 @@ const TOWN_FETCH = async () => {
   }
 };
 
-// 取得 村里 選項
-// const VILLAGE_FETCH = async () => {
-//   try {
-//     const response = await fetch('/map/VILLAGE_NLSC_121_1120928.json');
-//     const jsonData = await response.json();
-//     villageOptions.value = jsonData.features.map(element => {
-//       return {
-//         ID: element.properties.VILLAGECODE,
-//         CODE: element.properties.VILLAGECODE,
-//         NAME: element.properties.VILLAGENAME,
-//       }
-//     });
-//     console.log(villageOptions.value);
-//   } catch (error) {
-//     console.error('失敗:', error);
-//   }
-// };
-
 // 選擇縣市時，過濾出該縣市的鄉鎮市區
-const onCityChange = cityID => {
-  filteredTowns.value = townsOptions.value.filter(item => item.ID === cityID);
+const onCityChange = (ID) => {
+  filteredTowns.value = townsOptions.value.filter(item => item.ID.slice(0, 1) === ID);
   selectedTownCode.value = null;
-  filteredVillages.value = [];
 };
 
-// // 選擇鄉鎮市區時，過濾出該鄉鎮市區的村里
-// const onTownChange = (townID) => {
-//   filteredVillages.value = villageOptions.value.filter(item => item.ID === townID);
-//   selectedVillageCode.value = null;
-// };
+const searchEventHandler = (regionValue) => {
+  handleRegionChange(regionValue);
+};
+
+// 搜索位置
+function searchLocation() {
+  searchEventHandler();
+  centerDialogVisible.value = false;
+}
+
+watch(selectedCityCode, (newVal, oldVal) => {
+  console.log(newVal);
+  if (newVal) {
+    const selectedCity = cityOptions.value.find(item => item.ID.slice(0, 1) === newVal);
+    if (selectedCity) {
+      selectedCityNAME.value = selectedCity.NAME;
+      regionStore.regionName = selectedCity.NAME; // 更新 store 的 regionName
+      console.log(selectedCityNAME.value);
+      console.log(regionStore.regionName);
+    }
+  }
+});
+
+watch(selectedTownCode, (newVal, oldVal) => {
+  if (newVal) {
+    const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 1) === newVal);
+    if (selectedTown) {
+      selectedTownNAME.value = selectedTown.NAME;
+
+      console.log(selectedTownNAME.value);
+    }
+  }
+});
+
+
 
 // 搜尋位置的 dialog
 const openDialog = () => {
@@ -362,42 +314,14 @@ const openDialog = () => {
 // console.log(regionStore.originData);
 // hook mounted
 onMounted(async () => {
-  // await PRESIDENTIAL_FETCH_2022_ALL(); // 取得 2020 總統大選 全國各縣市得票數
-
-  // 2020 總統大選 全國各縣市得票數
-  const allData = await regionStore.fetchRegionData('ALL'); // 取得 2020 總統大選 全國各縣市得票數
-
-  console.log(allData);
-  // 處理 2020 總統大選 全國各縣市得票數
-  const { TotalVotes, districtVotes } = regionStore.processVoitData(allData);
-
-  candidate.value.map((item, index) => {
-    item.vote = TotalVotes[`candidate${index + 1}`];
-    item.districtVotes = districtVotes;
-  });
-  candidateView.value.map((item, index) => {
-    item.vote = TotalVotes[`candidate${index + 1}`];
-    item.districtVotes = districtVotes;
-  });
-  // console.log(candidate.value);
-  // console.log(candidateView.value);
-
-  // 使用 TotalVotes
-  // console.log("總票數：", TotalVotes);
-
-  // 使用 districtVotes
-  // console.log("各地區票數：", districtVotes);
-
-  // ex: 取得臺北市票數
-  // if (districtVotes['臺北市']) {
-  //   console.log("臺北市票數：", districtVotes['臺北市']);
-  // }
-
   // 取得 市/縣 坐標選項
-  await COUNTY_FETCH();
+  await COUNTY_FETCH(); 
 
   // 取得 鄉鎮市區 坐標選項
   await TOWN_FETCH();
+
+  await handleRegionChange('ALL');
+
 });
 </script>
 
@@ -442,8 +366,7 @@ onMounted(async () => {
             <el-select
               v-model="selectedCityCode"
               :placeholder="$t('current.selectCityPlaceholder')"
-              @change="onCityChange, handleRegionChange"
-            >
+              @change="onCityChange(selectedCityCode), searchEventHandler(selectedCityCode)">
               <el-option
                 v-for="item in cityOptions"
                 :key="item.ID"
@@ -456,8 +379,7 @@ onMounted(async () => {
             <el-select
               v-model="selectedTownCode"
               :placeholder="$t('current.selectNeighborhoodPlaceholder')"
-              @change="onTownChange, handleRegionChange"
-            >
+              @change="searchEventHandler(selectedTownCode)">
               <el-option
                 v-for="item in filteredTowns"
                 :key="item.ID"
@@ -466,14 +388,6 @@ onMounted(async () => {
               />
             </el-select>
 
-            <!-- village select -->
-            <!-- <el-select v-model="filteredVillages" :placeholder="$t('current.selectVillagePlaceholder')">
-              <el-option
-                v-for="item in villageOptions"
-                :label="item.NAME"
-                :value="item.CODE"
-              />
-            </el-select> -->
           </span>
 
           <!-- 底部按钮 -->
@@ -558,7 +472,7 @@ onMounted(async () => {
                   :key="item.id"
                   :percentage="item.value"
                   :color="item.color"
-                  :format="() => `${item.vote.toLocaleString()}票`"
+                  :format="() => `${item.vote?.toLocaleString()}票`"
                   :stroke-width="item.strokeWidth || 20"
                 ></el-progress>
               </div>
