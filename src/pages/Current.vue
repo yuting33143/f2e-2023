@@ -138,7 +138,7 @@ const testCountry = [
 ];
 // ===================== search dialog ===================== //
 // 控制 ”搜尋“ 顯示
-const centerDialogVisible = ref(true);
+const centerDialogVisible = ref(false);
 
 // ”搜尋“ 選擇框的選中值
 const selectedCityCode = ref(null);
