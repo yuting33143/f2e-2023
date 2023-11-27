@@ -1,10 +1,35 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { ref, onMounted, watch, watchEffect } from 'vue';
 import * as d3 from 'd3';
 import { feature } from 'topojson-client';
 import countyDataJson from '@/assets/json/country.json'; //市 COUNTY_MOI_1090820
 import townDataJson from '@/assets/json/town.json'; //鄉鎮區 TOWN_MOI_1120825
 import villageDataJson from '@/assets/json/village.json'; //里 VILLAGE_NLSC_121_1120928
+import { useWindowSizeStore } from '@/stores/windowSize.js';
+
+const windowSizeStore = useWindowSizeStore();
+
+const width = ref(windowSizeStore.width);
+
+watch(
+  () => windowSizeStore.width,
+  newWidth => {
+    width.value = newWidth;
+    mapScaleSet();
+    updateMapBasedOnSelectArea(selectArea.value);
+  }
+);
+
+// watch(
+//   async () => windowSizeStore.width,
+//   async newWidth => {
+//     width.value = newWidth;
+//     console.log(width.value);
+//     mapScaleSet(newWidth);
+//     await loadMapData();
+//     updateMapBasedOnSelectArea(selectArea.value);
+//   }
+// );
 
 const props = defineProps({
   initialSelectArea: Array
@@ -22,8 +47,11 @@ const townData = ref(null);
 const geometriesCountry = ref(null);
 const geometriesCountry2 = ref(null);
 // const geometriesCountry3 = ref(null);
+let location = [121, 24.5];
+let scale = 9000;
 
 onMounted(async () => {
+  mapScaleSet();
   await loadMapData();
   if (props.initialSelectArea && props.initialSelectArea.length > 0) {
     updateMapBasedOnSelectArea(props.initialSelectArea);
@@ -53,8 +81,8 @@ async function loadMapData() {
   // 建立投影函數
   projection.value = d3
     .geoMercator()
-    .center([121, 24.25]) // 設定適當的中心點
-    .scale(9000); // 設定適當的縮放
+    .center(location) // 設定適當的中心點
+    .scale(scale); // 設定適當的縮放
   // .translate([300, 300]);
 
   // 建立地理路徑產生器
@@ -107,7 +135,7 @@ function updateMapBasedOnSelectArea(initialSelectArea) {
     // const x = centroid[0];
     // const y = centroid[1];
 
-    // projection.value.center([121, 24.25]).scale(9000 * zoomLevel);
+    projection.value.center(location).scale(scale);
 
     path.value = d3.geoPath(projection.value);
     d3.selectAll('.county, .town').attr('d', path.value);
@@ -281,6 +309,49 @@ watch(
     }
   }
 );
+
+function mapScaleSet() {
+  console.log(width.value);
+  if (width.value >= 1700) {
+    console.log('bbb');
+    scale = 9000;
+    location = [121, 24.5];
+  } else if (width.value < 1700 && width.value >= 1400) {
+    console.log('ccc');
+    scale = 9000;
+    location = [121.7, 23.9];
+  } else if (width.value < 1400 && width.value >= 1156) {
+    console.log('ccc');
+    scale = 9000;
+    location = [122.25, 23.9];
+  } else if (width.value < 1156 && width.value >= 1070) {
+    console.log('ccc');
+    scale = 9000;
+    location = [122.5, 23.9];
+  } else if (width.value < 1070 && width.value >= 1000) {
+    console.log('ccc');
+    scale = 9000;
+    location = [122.65, 23.9];
+  } else if (width.value < 1000 && width.value >= 700) {
+    console.log('ccc');
+    scale = 9000;
+    location = [120.7, 24];
+  } else if (width.value < 700 && width.value >= 570) {
+    scale = 5500;
+    location = [122, 23.5];
+    console.log('ddd');
+  } else if (width.value < 570 && width.value >= 436) {
+    scale = 5500;
+    location = [123, 23.5];
+    console.log('eee');
+  } else if (width.value < 436) {
+    scale = 5500;
+    location = [123.5, 23.5];
+    console.log('eee');
+  }
+  console.log('scale', scale);
+  console.log('location', location);
+}
 </script>
 
 <template>
