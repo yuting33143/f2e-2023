@@ -867,12 +867,12 @@ const handleUpdateSelectArea = updatedArea => {
             }
             .people {
               position: absolute;
-              bottom: 2px;
-              right: 0px;
-              transform: scale(1.15);
+              bottom: -140px;
+              right: -148px;
+              transform: scale(0.4);
               z-index: 3;
               @media (max-width: 1080px) {
-                right: -20px;
+                right: -160px;
               }
               @include pad() {
                 width: 55px;
@@ -881,6 +881,7 @@ const handleUpdateSelectArea = updatedArea => {
                 top: 16px;
                 left: 18px;
                 z-index: 1;
+                transform: scale(1.2);
               }
             }
             .people-rwd-bg {
@@ -1294,7 +1295,7 @@ const handleUpdateSelectArea = updatedArea => {
           }
           .area-people {
             position: absolute;
-            bottom: -7px;
+            bottom: 0px;
             right: -7px;
             display: block;
             width: 122px;
