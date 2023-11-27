@@ -41,9 +41,11 @@ const selectedYearTab = ref('2020');
 const selectedPeriod = ref('15');
 
 function changeYearTab(year) {
+  if (selectedYearTab.value == year) return;
   selectedYearTab.value = year;
   const period = yearTab.find(item => item.year === year).period;
   selectedPeriod.value = period;
+  SelectArea.value = [];
 }
 
 function changePeriod(direction) {
@@ -486,7 +488,7 @@ const handleUpdateSelectArea = updatedArea => {
     </div>
   </div>
   <!-- 地圖的popover資訊 -->
-  <div class="popover">
+  <div class="popover" v-if="false">
     <div class="popover-top">
       <div class="popover-area">台北市士林區</div>
     </div>
@@ -517,12 +519,12 @@ const handleUpdateSelectArea = updatedArea => {
 <style lang="scss" scoped>
 .history-wrapper {
   background-color: $blue-bg;
-  height: 780px;
+  // height: 780px;
   padding: 60px 3%;
   display: flex;
 
   @include rwd() {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   @include pad {
@@ -539,15 +541,19 @@ const handleUpdateSelectArea = updatedArea => {
       display: flex;
       gap: 18px;
 
-      @include pad {
+      @include rwd {
         gap: 5px;
         background-color: $white;
         position: fixed;
         width: 100%;
-        top: 69px;
+        top: 99px;
         left: 0px;
         z-index: 50;
         height: 44px;
+
+        @include pad {
+          top: 69px;
+        }
       }
 
       .tab {
@@ -562,7 +568,7 @@ const handleUpdateSelectArea = updatedArea => {
         box-shadow: 0px 0px 6px 0px rgba(206, 214, 226, 0.25);
         cursor: pointer;
 
-        @include pad {
+        @include rwd {
           gap: 3px;
           height: 42px;
           border-radius: 25px;
@@ -575,18 +581,18 @@ const handleUpdateSelectArea = updatedArea => {
           background-color: $primary;
 
           .period {
-            @include pad {
+            @include rwd {
               background-color: $primary;
               color: $white;
             }
           }
           .year {
-            @include pad {
+            @include rwd {
               color: $black;
             }
           }
 
-          @include pad {
+          @include rwd {
             background-color: $white;
           }
         }
@@ -603,7 +609,7 @@ const handleUpdateSelectArea = updatedArea => {
           align-items: center;
           justify-content: center;
 
-          @include pad {
+          @include rwd {
             width: 22px;
             height: 22px;
             font-size: 11px;
@@ -614,7 +620,7 @@ const handleUpdateSelectArea = updatedArea => {
             font-weight: 600;
             padding-top: 6px;
 
-            @include pad {
+            @include rwd {
               font-size: 5px;
             }
           }
@@ -625,7 +631,7 @@ const handleUpdateSelectArea = updatedArea => {
 
           &:hover {
             color: $white;
-            @include pad {
+            @include rwd {
               color: $black;
             }
           }
@@ -634,19 +640,19 @@ const handleUpdateSelectArea = updatedArea => {
       .selected {
         background-color: $primary;
 
-        @include pad {
+        @include rwd {
           background-color: $white;
         }
 
         .year {
           color: $white;
 
-          @include pad {
+          @include rwd {
             color: $black;
           }
         }
         .period {
-          @include pad {
+          @include rwd {
             background-color: $primary;
             color: $white;
           }
@@ -1316,6 +1322,12 @@ const handleUpdateSelectArea = updatedArea => {
     max-height: calc(100vh - 160px);
     @include rwd() {
       width: 100%;
+      position: static;
+      height: 600px;
+      // padding-top: 69px;
+    }
+    @include pad {
+      height: 400px;
     }
   }
 }

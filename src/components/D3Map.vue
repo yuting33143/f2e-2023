@@ -268,6 +268,19 @@ function resetMap() {
   // 清除所有選中狀態
   d3.selectAll('.county, .town').classed('selected selected-town', false);
 }
+
+watch(
+  () => props.initialSelectArea,
+  (newVal, oldVal) => {
+    if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
+      if (newVal && newVal.length > 0) {
+        updateMapBasedOnSelectArea(newVal);
+      } else {
+        backToAll();
+      }
+    }
+  }
+);
 </script>
 
 <template>
@@ -302,11 +315,22 @@ function resetMap() {
   &:hover {
     background-color: $gray5;
   }
+
+  @include rwd {
+    left: 3%;
+    top: 170px;
+    position: absolute;
+  }
 }
 .map-container {
   height: calc(100vh - 160px);
   width: 95%;
   //   border: 1px solid black;
+
+  @include rwd {
+    height: 100%;
+    width: 100%;
+  }
 }
 :deep(.county) {
   fill: $orange;
