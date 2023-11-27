@@ -104,7 +104,7 @@ const isMobileHeader = ref(false);
       <img src="@/assets/images/button/menu.png" alt="" />
     </div>
     <el-drawer v-model="isMobileHeader" direction="rtl" size="100%" class="nav-dialog">
-      <template #title>
+      <template #header>
         <RouterLink class="logo" to="/" @click="isMobileHeader = false">
           <img src="@/assets/images/logo-w.png" />
         </RouterLink>

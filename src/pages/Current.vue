@@ -193,26 +193,36 @@ const candidatePercentages = computed(() => {
   }));
 });
 
-// TODO: 如果選擇鄉鎮區，則不會有縣市的Key，需要另外處理邏輯
 // 更新候選人總票數和各區域票數
 function _updateCandidatesVotes(candidates, totalVotes, districtVotes) {
   candidates.forEach((candidate, index) => {
-    // 确保 totalVotes 存在且包含所需的候选人票数
+    // 確保 totalVotes 存在且包含所需的候選人票數
     if (totalVotes && totalVotes[`candidate${index + 1}`]) {
       candidate.vote = totalVotes[`candidate${index + 1}`];
     }
-    candidate.districtVotes = districtVotes;
+    
+    // 根據 regionName 從 districtVotes 中獲取對應的票數
+    const districtVote = districtVotes[regionStore.regionName];
+    if (districtVote) {
+      candidate.districtVote = districtVote[`candidate${index + 1}`];
+    }
+  });
+
+  // 如果 candidateView 是一個 ref，則需要這樣訪問和更新它的值
+  candidateView.value.forEach((viewItem, index) => {
+    const districtVote = districtVotes[regionStore.regionName];
+    if (districtVote) {
+      viewItem.vote = districtVote[`candidate${index + 1}`];
+    }
   });
 }
 
-// mounted 時取得縣市資料
-const handleRegionChange = async (regionValue) => {
-
-  const letterPart = regionValue && regionValue.slice(0, 1);
+const handleRegionChange = async (regionValue = 'L') => {
+  const letterPart = regionValue.slice(0, 1);
   const regionCode = regionStore.regionMap[letterPart];
 
   if (!regionCode) {
-    console.error('Invalid region name:', letterPart);
+    console.error('Invalid region code:', letterPart);
     return;
   }
 
@@ -224,10 +234,7 @@ const handleRegionChange = async (regionValue) => {
     }
 
     const { totalVotes, districtVotes } = regionStore.processVoteData(allData);
-
-    console.log(totalVotes);
-    console.log(districtVotes);
-    // 更新候選人選票資訊
+    console.log(totalVotes, districtVotes);
     _updateCandidatesVotes(candidate.value, totalVotes, districtVotes);
     _updateCandidatesVotes(candidateView.value, totalVotes, districtVotes);
   } catch (error) {
@@ -241,46 +248,21 @@ const onCityChange = ID => {
   selectedTownCode.value = null;
 };
 
-// 選擇鄉鎮市區時，過濾出該鄉鎮市區的村里
-const onTownChange = townCode => {
-  filteredVillages.value = villageOptions.value.filter(
-    item => item.CODE.substring(0, 5) === townCode
-  );
-  selectedVillage.value = null;
-};
 
+// 選擇select，更新 store 的 regionName
 const searchEventHandler = regionValue => {
   handleRegionChange(regionValue);
 };
-
-// 搜索位置
-function searchLocation() {
-  console.log(selectedTownNAME.value);
-  // 搜索選中城鎮區曲的 data
-  if (selectedTownNAME.value) {
-    const districtData = regionStore.districtDataAdjusted[selectedTownNAME.value];
-    const totalVotes = regionStore.totalVotesDataAdjusted;
-
-    console.log(districtData);
-    console.log(totalVotes);
-    if (districtData && totalVotes) {
-      // 更新 candidate 和 candidateView
-      _updateCandidatesVotes(candidate.value, totalVotes, districtData);
-      _updateCandidatesVotes(candidateView.value, totalVotes, districtData);
-    }
-  }
-
-  centerDialogVisible.value = false;
-}
 
 /**
  * 監聽選擇框的選中值，並更新 store 的 regionName
  * 選中的縣市名稱會用於 PINIA 內部的資料查詢，並 return 該選中的鄉鎮區域
  */
 // 觀察選擇框的選中值，並更新 store 的 regionName
-watch(selectedCityCode, (newVal, oldVal) => {
+watch(selectedCityCode, async(newVal, _) => {
   console.log(newVal);
   if (newVal) {
+    await handleRegionChange(newVal);
     const selectedCity = cityOptions.value.find(item => item.ID.slice(0, 1) === newVal);
     if (selectedCity) {
       regionStore.regionName = selectedCity.NAME; // 更新 store 的 regionName
@@ -289,17 +271,35 @@ watch(selectedCityCode, (newVal, oldVal) => {
   }
 });
 
-/**
- * 這邊取得的 NAME，是鄉鎮市區的名稱，會依據選中的縣市，過濾出該縣市的鄉鎮市區
- */
-// 觀察選擇框的選中值，並更新 store 的 regionName
-watch(selectedTownCode, (newVal, oldVal) => {
-  if (newVal) {
-    const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 1) === newVal);
-    if (selectedTown) {
-      selectedTownNAME.value = selectedTown.NAME; // 這邊取得的 NAME，是鄉鎮市區的名稱，會用於查詢取得縣市顯示資料內的鄉鎮市區
+// // 當選擇鄉鎮區時，使用 Name 查找對應資料
+watch(selectedTownCode, (newVal) => {
+  const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 3) === newVal);
+
+  if (selectedTown) {
+    selectedTownNAME.value = selectedTown.NAME;
+  }
+
+  if (newVal && selectedTownNAME.value) {
+    const districtData = regionStore.districtDataAdjusted[selectedTownNAME.value];
+
+    console.log(districtData);
+
+    const totalVotes = regionStore.totalVotesDataAdjusted;
+    selectedTownNAME.value = selectedTown.NAME
+
+    if (districtData && totalVotes) {
+      // 將找到的資料更新到 Candidate
+      _updateCandidatesVotes(candidate.value, totalVotes, districtData);
+      _updateCandidatesVotes(candidateView.value, totalVotes, districtData);
     }
   }
+  
+  // 關閉跳窗
+  centerDialogVisible.value = false;
+  
+  // 清空選中的縣市選項
+  selectedCityCode.value = null;
+  selectedTownCode.value = null;
 });
 
 // ==================== 取得坐標資料 ==================== //
@@ -421,7 +421,7 @@ const handleUpdateSelectArea = updatedArea => {
         <el-button class="onDrawer" @click="showDrawer = true">onDrawer</el-button>
 
         <!-- 搜尋 dialog -->
-        <el-dialog dialog v-model="centerDialogVisible" title="搜尋" width="30%" center>
+        <el-dialog dialog v-model="centerDialogVisible" title="搜尋" width="30%" center @close="selectedCityCode = '', selectedTownCode = ''">
           <span>
             <!-- city select -->
             <el-select
@@ -451,13 +451,6 @@ const handleUpdateSelectArea = updatedArea => {
               />
             </el-select>
           </span>
-
-          <!-- 底部按钮 -->
-          <template #footer>
-            <span class="dialog-footer">
-              <el-button type="primary" @click="searchLocation">搜尋</el-button>
-            </span>
-          </template>
         </el-dialog>
       </div>
 
