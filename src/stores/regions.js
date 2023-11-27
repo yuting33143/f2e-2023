@@ -4,12 +4,13 @@ import { defineStore } from 'pinia';
 export const useRegionStore = defineStore('region', {
   state: () => ({
     originData: {}, // 原始 json 資料
-    districtDataAdjusted: {}, // 處理過的 "各地區票數"
-    totalVotesDataAdjusted: {}, // 處理過的 "各地區票數"
     totalVotes: {}, // 總票數
     districtVotes: {}, // 各地區票數
     regionName: '', // 選區名稱
     Code: '', // 選區代碼
+    year: '2020', // 年份
+    totalVotesDataAdjusted: {}, // 總票數調整後資料
+    districtDataAdjusted: {}, // 各地區票數調整後資料
 
     // 選區代碼對應表
     regionMap: {
@@ -43,7 +44,10 @@ export const useRegionStore = defineStore('region', {
   actions: {
     async fetchRegionData(regionCode) {
       this.Code = regionCode;
-      let url = regionCode === 'ALL' ? '/2020_voit/ALL.json' : `/2020_voit/city/${regionCode}.json`;
+      let url =
+        regionCode === 'ALL'
+          ? `/${this.year}_voit/ALL.json`
+          : `/${this.year}_voit/city/${regionCode}.json`;
 
       try {
         const response = await fetch(url);
@@ -96,36 +100,6 @@ export const useRegionStore = defineStore('region', {
           : {};
       }
     },
-    // getDistrictVotes(validData) {
-    //   const districtVotes = {};
-
-    //   // 检查是否有有效数据
-    //   if (validData.length === 0) {
-    //     return {};
-    //   }
-    //   if (this.regionName || this.Code === 'ALL') {
-    //     validData.forEach(item => {
-    //       let districtNameField =
-    //         item['第15任總統副總統選舉候選人得票數一覽表'] ||
-    //         item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`];
-
-    //       if (!districtNameField) {
-    //         return;
-    //       }
-
-    //       const districtName = districtNameField.trim();
-
-    //       if (!['總　計', '行政區別'].includes(districtName)) {
-    //         districtVotes[districtName] = {
-    //           candidate1: parseInt(item.Column2.replace(/,/g, '') || 0),
-    //           candidate2: parseInt(item.Column3.replace(/,/g, '') || 0),
-    //           candidate3: parseInt(item.Column4.replace(/,/g, '') || 0)
-    //         };
-    //       }
-    //     });
-    //   }
-    //   return districtVotes;
-    // },
     getDistrictVotes(validData) {
       const districtVotes = {};
 
@@ -159,18 +133,23 @@ export const useRegionStore = defineStore('region', {
     processVoteData(jsonData) {
       if (!Array.isArray(jsonData)) {
         console.error('jsonData is not an array');
-        return null;
+        return { totalVotes: {}, districtVotes: {} }; // 返回空對象以避免解構賦值時出錯
       }
+
       const validData = this.getValidData(jsonData);
-
       const totalVotes = this.getTotalVotes(validData);
-
       const districtVotes = this.getDistrictVotes(validData);
 
+      // 處理過的 "總票數"
       this.totalVotesDataAdjusted = totalVotes || {};
+
+      // 處理過的 "各地區票數"
       this.districtDataAdjusted = districtVotes || {};
 
-      return { totalVotes, districtVotes };
+      console.log(this.districtDataAdjusted);
+      console.log(this.totalVotesDataAdjusted);
+
+      return { totalVotes, districtVotes }; // 在這裡返回這兩個對象
     }
   }
 });
