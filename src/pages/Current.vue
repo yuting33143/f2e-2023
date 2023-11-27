@@ -15,15 +15,13 @@ import birdBg from '@/assets/images/bg-green.png';
 import { useWindowSizeStore } from '@/stores/windowSize.js';
 import { useRegionStore } from '@/stores/regions.js';
 
-
 const windowSizeStore = useWindowSizeStore();
 const isMobile = computed(() => windowSizeStore.width <= 768);
-
 
 // ===================== Pina 控制選票 Data 取得 ===================== //
 const regionStore = useRegionStore();
 
-const handleRegionChange = async (regionID) => {
+const handleRegionChange = async regionID => {
   const regionCode = regionStore.regionMap[regionID];
   if (regionCode) {
     await regionStore.fetchRegionData(regionCode);
@@ -31,7 +29,6 @@ const handleRegionChange = async (regionID) => {
     console.error('Invalid region name:', regionID);
   }
 };
-
 
 // ===================== 地圖的popover資訊(在 “搜尋 dialog” 選擇完後顯示資訊) ===================== //
 // 地圖的popover資訊 、people-group 的資料
@@ -86,7 +83,6 @@ const popoverTotalVotes = computed(() => {
 const popoverCandidatePercentages = computed(() => {
   return candidate.value.map(item => ((item.vote / popoverTotalVotes.value) * 100).toFixed(2));
 });
-
 
 const winParty = ref('1');
 
@@ -146,8 +142,7 @@ const testCountry = [
     party1: '37',
     party2: '42',
     party3: '21'
-  },
-  
+  }
 ];
 // ===================== search dialog ===================== //
 // 控制 ”搜尋“ 顯示
@@ -183,9 +178,9 @@ const candidateView = ref([
     number: '1',
     party: '貓貓進步黨',
     img: catCircle,
-    color: "#F5A623",
+    color: '#F5A623',
     percentage: 0,
-    strokeWidth: 26.5 
+    strokeWidth: 26.5
   },
   {
     number: '2',
@@ -193,7 +188,7 @@ const candidateView = ref([
     img: dogCircle,
     color: '#4A90E2',
     percentage: 0,
-    strokeWidth: 26.5 
+    strokeWidth: 26.5
   },
   {
     number: '3',
@@ -201,7 +196,7 @@ const candidateView = ref([
     img: birdCircle,
     color: '#7ED321',
     percentage: 0,
-    strokeWidth: 26.5 
+    strokeWidth: 26.5
   }
 ]);
 
@@ -212,7 +207,6 @@ const totalVotes = computed(() => {
 
 // 計算候選人得票率
 const candidatePercentages = computed(() => {
-  
   return candidateView.value.map(item => ({
     ...item,
     value: Number(((item.percentage / totalVotes.value) * 100).toFixed(2))
@@ -220,10 +214,10 @@ const candidatePercentages = computed(() => {
 });
 
 // 處理 選票資料格式
-const processVoitData = (jsonData) => {
+const processVoitData = jsonData => {
   // 確保 jsonData 是一個陣列
   if (!Array.isArray(jsonData)) {
-    console.error("jsonData is not an array");
+    console.error('jsonData is not an array');
     return;
   }
 
@@ -231,28 +225,36 @@ const processVoitData = (jsonData) => {
   let TotalVotes = {};
   let districtVotes = {};
 
-  const validData = jsonData.filter(item => (item != null || undefined) && (item['第15任總統副總統選舉候選人得票數一覽表'] !== '行政區別')); // 排除 null 和 undefined 值
+  const validData = jsonData.filter(
+    item =>
+      (item != null || undefined) && item['第15任總統副總統選舉候選人得票數一覽表'] !== '行政區別'
+  ); // 排除 null 和 undefined 值
   console.log(validData);
   // 處理總票數
-  const totalVoteEntry = validData.find(item => item && item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計');
+  const totalVoteEntry = validData.find(
+    item => item && item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計'
+  );
   if (totalVoteEntry) {
-
     TotalVotes = {
-        candidate1: parseInt(totalVoteEntry.Column2 ? totalVoteEntry.Column2.replace(/,/g, '') : 0),
-        candidate2: parseInt(totalVoteEntry.Column3 ? totalVoteEntry.Column3.replace(/,/g, '') : 0),
-        candidate3: parseInt(totalVoteEntry.Column4 ? totalVoteEntry.Column4.replace(/,/g, '') : 0)
+      candidate1: parseInt(totalVoteEntry.Column2 ? totalVoteEntry.Column2.replace(/,/g, '') : 0),
+      candidate2: parseInt(totalVoteEntry.Column3 ? totalVoteEntry.Column3.replace(/,/g, '') : 0),
+      candidate3: parseInt(totalVoteEntry.Column4 ? totalVoteEntry.Column4.replace(/,/g, '') : 0)
     };
     console.log(TotalVotes);
   }
 
   // 處理各地區票數
   validData.forEach(item => {
-    if (item && item['第15任總統副總統選舉候選人得票數一覽表'] && !item['第15任總統副總統選舉候選人得票數一覽表'].includes('總　計'|| '行政區別')) {
+    if (
+      item &&
+      item['第15任總統副總統選舉候選人得票數一覽表'] &&
+      !item['第15任總統副總統選舉候選人得票數一覽表'].includes('總　計' || '行政區別')
+    ) {
       const district = item['第15任總統副總統選舉候選人得票數一覽表'].trim();
       districtVotes[district] = {
         candidate1: parseInt(item.Column2 ? item.Column2.replace(/,/g, '') : 0),
-        candidate2: parseInt(item.Column3 ? item.Column3.replace(/,/g, ''): 0),
-        candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, ''): 0)
+        candidate2: parseInt(item.Column3 ? item.Column3.replace(/,/g, '') : 0),
+        candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, '') : 0)
       };
     }
   });
@@ -261,11 +263,7 @@ const processVoitData = (jsonData) => {
   return { TotalVotes, districtVotes };
 };
 
-
-
-
-
-// ==================== 取得坐標資料 ==================== // 
+// ==================== 取得坐標資料 ==================== //
 // 取得 市/縣 選項
 const COUNTY_FETCH = async () => {
   try {
@@ -322,14 +320,14 @@ const TOWN_FETCH = async () => {
 // };
 
 // 選擇縣市時，過濾出該縣市的鄉鎮市區
-const onCityChange = (cityID) => {
+const onCityChange = cityID => {
   filteredTowns.value = townsOptions.value.filter(item => item.ID === cityID);
   selectedTownCode.value = null;
   filteredVillages.value = [];
 };
 
 // 選擇鄉鎮市區時，過濾出該鄉鎮市區的村里
-const onTownChange = (townID) => {
+const onTownChange = townID => {
   filteredVillages.value = villageOptions.value.filter(item => item.ID === townID);
   selectedVillageCode.value = null;
 };
@@ -346,20 +344,18 @@ onMounted(async () => {
   console.log(allData);
   // 處理 2020 總統大選 全國各縣市得票數
   const { TotalVotes, districtVotes } = processVoitData(allData);
-  
-  candidate.value.map(
-    (item, index) => {
-      item.vote = TotalVotes[`candidate${index + 1}`];
-      item.districtVotes = districtVotes;
-    }
-  )
+
+  candidate.value.map((item, index) => {
+    item.vote = TotalVotes[`candidate${index + 1}`];
+    item.districtVotes = districtVotes;
+  });
   console.log(candidate.value);
-  
+
   // 使用 TotalVotes
-  console.log("總票數：", TotalVotes);
+  console.log('總票數：', TotalVotes);
 
   // 使用 districtVotes
-  console.log("各地區票數：", districtVotes);
+  console.log('各地區票數：', districtVotes);
 
   // ex: 取得臺北市票數
   // if (districtVotes['臺北市']) {
@@ -367,7 +363,7 @@ onMounted(async () => {
   // }
 
   // 取得 市/縣 坐標選項
-  await COUNTY_FETCH(); 
+  await COUNTY_FETCH();
 
   // 取得 鄉鎮市區 坐標選項
   await TOWN_FETCH();
@@ -377,7 +373,6 @@ onMounted(async () => {
 const openDialog = () => {
   centerDialogVisible.value = true;
 };
-
 </script>
 
 <template>
@@ -418,7 +413,11 @@ const openDialog = () => {
         <el-dialog dialog v-model="centerDialogVisible" title="搜尋" width="30%" center>
           <span>
             <!-- city select -->
-            <el-select v-model="selectedCityCode" :placeholder="$t('current.selectCityPlaceholder')" @change="onCityChange, handleRegionChange">
+            <el-select
+              v-model="selectedCityCode"
+              :placeholder="$t('current.selectCityPlaceholder')"
+              @change="onCityChange, handleRegionChange"
+            >
               <el-option
                 v-for="item in cityOptions"
                 :key="item.ID"
@@ -428,7 +427,11 @@ const openDialog = () => {
             </el-select>
 
             <!-- townsOptions select -->
-            <el-select v-model="selectedTownCode" :placeholder="$t('current.selectNeighborhoodPlaceholder')" @change="onTownChange, handleRegionChange">
+            <el-select
+              v-model="selectedTownCode"
+              :placeholder="$t('current.selectNeighborhoodPlaceholder')"
+              @change="onTownChange, handleRegionChange"
+            >
               <el-option
                 v-for="item in filteredTowns"
                 :key="item.ID"
@@ -505,16 +508,19 @@ const openDialog = () => {
 
       <!-- 投票總覽 -->
       <div class="voitView" v-if="!isMobile">
-        <div class="voitView__item"
+        <div
+          class="voitView__item"
           v-for="(item, index) in candidatePercentages"
           :key="index"
           :class="`bg-${item.color}`"
         >
-          <img class="item__people" :src="item.img" :alt="item.img">
+          <img class="item__people" :src="item.img" :alt="item.img" />
           <div class="item__content">
             <!-- 黨派 -->
             <div class="content__title">
-              <span class="number" :style="`background-color: ${item.color}`">{{ item.number}}</span>
+              <span class="number" :style="`background-color: ${item.color}`">{{
+                item.number
+              }}</span>
               <p class="party">{{ item.party }}</p>
             </div>
 
@@ -537,17 +543,19 @@ const openDialog = () => {
 
       <!-- 投票總覽 移動端 -->
       <div class="voitView voitView--isMobile" v-if="isMobile">
-        <div class="voitView__item"
+        <div
+          class="voitView__item"
           v-for="(item, index) in candidatePercentages"
           :key="index"
           :class="`bg-${item.color}`"
         >
-          
           <div class="item__content">
             <!-- 黨派 -->
             <div class="content__title">
-              <img class="item__people" :src="item.img" :alt="item.img">
-              <span class="number" :style="`background-color: ${item.color}`">{{ item.number}}</span>
+              <img class="item__people" :src="item.img" :alt="item.img" />
+              <span class="number" :style="`background-color: ${item.color}`">{{
+                item.number
+              }}</span>
               <p class="party">{{ item.party }}</p>
             </div>
 
@@ -570,33 +578,34 @@ const openDialog = () => {
 
       <!-- drawer -->
       <el-drawer
-          v-model="showDrawer"
-          direction="ltr"
-          :with-header="false"
-          size="50%"
-          class="nav-dialog"
-        >
+        v-model="showDrawer"
+        direction="ltr"
+        :with-header="false"
+        size="50%"
+        class="nav-dialog"
+      >
         <!-- close -->
         <div class="custom-close-icon" @click="showDrawer = false">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
-              <g clip-path="url(#clip0_200_5457)">
-                <path
-                  d="M16 38C16 36.516 14.534 34.3 13.05 32.44C11.142 30.04 8.862 27.946 6.248 26.348C4.288 25.15 1.912 24 1.66948e-07 24M1.66948e-07 24C1.912 24 4.29 22.85 6.248 21.652C8.862 20.052 11.142 17.958 13.05 15.562C14.534 13.7 16 11.48 16 10M1.66948e-07 24L48 24"
-                  stroke="#2B2B2D"
-                  stroke-width="3"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_200_5457">
-                  <rect
-                    width="48"
-                    height="48"
-                    fill="white"
-                    transform="translate(0 48) rotate(-90)"
-                  />
-                </clipPath>
-              </defs>
-            </svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="48"
+            height="48"
+            viewBox="0 0 48 48"
+            fill="none"
+          >
+            <g clip-path="url(#clip0_200_5457)">
+              <path
+                d="M16 38C16 36.516 14.534 34.3 13.05 32.44C11.142 30.04 8.862 27.946 6.248 26.348C4.288 25.15 1.912 24 1.66948e-07 24M1.66948e-07 24C1.912 24 4.29 22.85 6.248 21.652C8.862 20.052 11.142 17.958 13.05 15.562C14.534 13.7 16 11.48 16 10M1.66948e-07 24L48 24"
+                stroke="#2B2B2D"
+                stroke-width="3"
+              />
+            </g>
+            <defs>
+              <clipPath id="clip0_200_5457">
+                <rect width="48" height="48" fill="white" transform="translate(0 48) rotate(-90)" />
+              </clipPath>
+            </defs>
+          </svg>
         </div>
 
         <template #header>
@@ -609,31 +618,31 @@ const openDialog = () => {
           <!-- 左邊全區scalebar(各區票數) -->
           <div class="area-wrapper">
             <div class="search">
-                <el-button v-model="areaAllSelected" class="all-btn">全臺</el-button>
-                <el-select v-model="areaCitySelected" class="city-select" placeholder="縣市">
-                  <el-option
-                    v-for="item in areaCityOptions"
-                    :key="item.ID"
-                    :label="item.NAME"
-                    :value="item.CODE"
-                  />
-                </el-select>
-                <el-select v-model="areaTownSelected" class="area-select" placeholder="選擇鄉鎮區">
-                  <el-option
-                    v-for="item in areaFilteredTowns"
-                    :key="item.ID"
-                    :label="item.NAME"
-                    :value="item.CODE"
-                  />
-                </el-select>
-                <el-select v-model="areaVillageSelected" class="unit-select" placeholder="選擇里">
-                  <el-option
-                    v-for="item in areafilteredVillages"
-                    :key="item.ID"
-                    :label="item.NAME"
-                    :value="item.CODE"
-                  />
-                </el-select>
+              <el-button v-model="areaAllSelected" class="all-btn">全臺</el-button>
+              <el-select v-model="areaCitySelected" class="city-select" placeholder="縣市">
+                <el-option
+                  v-for="item in areaCityOptions"
+                  :key="item.ID"
+                  :label="item.NAME"
+                  :value="item.CODE"
+                />
+              </el-select>
+              <el-select v-model="areaTownSelected" class="area-select" placeholder="選擇鄉鎮區">
+                <el-option
+                  v-for="item in areaFilteredTowns"
+                  :key="item.ID"
+                  :label="item.NAME"
+                  :value="item.CODE"
+                />
+              </el-select>
+              <el-select v-model="areaVillageSelected" class="unit-select" placeholder="選擇里">
+                <el-option
+                  v-for="item in areafilteredVillages"
+                  :key="item.ID"
+                  :label="item.NAME"
+                  :value="item.CODE"
+                />
+              </el-select>
             </div>
 
             <div class="area area-left">
@@ -708,8 +717,7 @@ const openDialog = () => {
     <!-- 右邊 -->
     <div class="right">
       <!-- map -->
-      <div>
-      </div>
+      <div></div>
     </div>
   </div>
 </template>
@@ -736,6 +744,9 @@ const openDialog = () => {
 
     .title {
       @include header1;
+      p {
+        margin-top: 0;
+      }
 
       @include rwd() {
         @include flex-setting($justify: space-between);
@@ -876,12 +887,12 @@ const openDialog = () => {
             }
             .people {
               position: absolute;
-              bottom: 2px;
-              right: 0px;
-              transform: scale(1.15);
+              bottom: -140px;
+              right: -148px;
+              transform: scale(0.4);
               z-index: 3;
               @media (max-width: 1080px) {
-                right: -20px;
+                right: -160px;
               }
               @include pad() {
                 width: 55px;
@@ -890,6 +901,7 @@ const openDialog = () => {
                 top: 16px;
                 left: 18px;
                 z-index: 1;
+                transform: scale(1.2);
               }
             }
             .people-rwd-bg {
@@ -968,7 +980,7 @@ const openDialog = () => {
         @include flex-setting($justify: flex-start, $align: flex-end);
         width: 100%;
         padding: 19px 0px 9px;
-        border-bottom: 1px solid #F5F5F5;
+        border-bottom: 1px solid #f5f5f5;
         gap: 30px;
         .item__content {
           @include flex-setting($direction: column, $align: flex-start);
@@ -983,7 +995,7 @@ const openDialog = () => {
               width: 24px;
               height: 24px;
               border-radius: 50%;
-              color: #FFF;
+              color: #fff;
               font-size: 16px;
               font-weight: 700;
             }
@@ -993,11 +1005,10 @@ const openDialog = () => {
             @include flex-setting;
 
             .progress {
-              
               width: 100%;
               .el-progress {
                 @include header6;
-                color: #282D3A;
+                color: #282d3a;
                 gap: 16px;
               }
             }
@@ -1012,9 +1023,7 @@ const openDialog = () => {
           @include flex-setting($direction: column, $align: flex-start);
         }
       }
-    } 
-    
-
+    }
   }
 
   .right {
@@ -1027,7 +1036,7 @@ const openDialog = () => {
 
 .nav-dialog {
   background: $white !important;
-  
+
   .custom-close-icon {
     cursor: pointer;
   }
