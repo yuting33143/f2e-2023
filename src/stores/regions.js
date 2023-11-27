@@ -167,8 +167,8 @@ export const useRegionStore = defineStore('region', {
 
       const districtVotes = this.getDistrictVotes(validData);
 
-      this.totalVotesDataAdjusted = totalVotes;
-      this.districtDataAdjusted = districtVotes;
+      this.totalVotesDataAdjusted = totalVotes || {};
+      this.districtDataAdjusted = districtVotes || {};
 
       return { totalVotes, districtVotes };
     }

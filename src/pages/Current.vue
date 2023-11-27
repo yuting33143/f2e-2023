@@ -151,7 +151,6 @@ const townsOptions = ref([]);
 
 // ”搜尋“ 選擇框的選項（filter）
 const filteredTowns = ref([]);
-const filteredVillages = ref([]);
 
 // 第二區塊 bar 的資料
 const candidateView = ref([
@@ -194,16 +193,19 @@ const candidatePercentages = computed(() => {
   }));
 });
 
-
-// 更新候选人总票数和各区票数
+// TODO: 如果選擇鄉鎮區，則不會有縣市的Key，需要另外處理邏輯
+// 更新候選人總票數和各區域票數
 function _updateCandidatesVotes(candidates, totalVotes, districtVotes) {
   candidates.forEach((candidate, index) => {
-    candidate.vote = totalVotes[`candidate${index + 1}`];
+    // 确保 totalVotes 存在且包含所需的候选人票数
+    if (totalVotes && totalVotes[`candidate${index + 1}`]) {
+      candidate.vote = totalVotes[`candidate${index + 1}`];
+    }
     candidate.districtVotes = districtVotes;
   });
 }
 
-// 取得縣市資料
+// mounted 時取得縣市資料
 const handleRegionChange = async (regionValue) => {
 
   const letterPart = regionValue && regionValue.slice(0, 1);
@@ -223,7 +225,9 @@ const handleRegionChange = async (regionValue) => {
 
     const { totalVotes, districtVotes } = regionStore.processVoteData(allData);
 
-    // 更新候选人信息
+    console.log(totalVotes);
+    console.log(districtVotes);
+    // 更新候選人選票資訊
     _updateCandidatesVotes(candidate.value, totalVotes, districtVotes);
     _updateCandidatesVotes(candidateView.value, totalVotes, districtVotes);
 
@@ -246,16 +250,14 @@ const searchEventHandler = (regionValue) => {
 // 搜索 click 事件
 function searchLocation() {
   console.log(selectedTownNAME.value);
-  // 搜索選中城鎮區区的 data
+  // 搜索選中城鎮區曲的 data
   if (selectedTownNAME.value) {
-    console.log(regionStore.districtDataAdjusted);
-    console.log(regionStore.totalVotesDataAdjusted);
     const districtData = regionStore.districtDataAdjusted[selectedTownNAME.value];
     const totalVotes = regionStore.totalVotesDataAdjusted;
 
     console.log(districtData);
     console.log(totalVotes);
-    if (districtData) {
+    if (districtData && totalVotes) {
       // 更新 candidate 和 candidateView
       _updateCandidatesVotes(candidate.value, totalVotes, districtData);
       _updateCandidatesVotes(candidateView.value, totalVotes, districtData);
@@ -290,8 +292,6 @@ watch(selectedTownCode, (newVal, oldVal) => {
     const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 4) === newVal);
     if (selectedTown) { 
       selectedTownNAME.value = selectedTown.NAME; // 這邊取得的 NAME，是鄉鎮市區的名稱，會用於查詢取得縣市顯示資料內的鄉鎮市區
-
-      console.log(selectedTownNAME.value);
     }
   }
 });
@@ -310,7 +310,6 @@ const COUNTY_FETCH = async () => {
         NAME: element.properties.COUNTYNAME
       };
     });
-    console.log(cityOptions.value);
   } catch (error) {
     console.error('失敗:', error);
   }
@@ -496,6 +495,7 @@ onMounted(async () => {
       <div class="voitView" v-if="!isMobile">
         <div
           class="voitView__item"
+          v-if="candidatePercentages.length > 0"
           v-for="(item, index) in candidatePercentages"
           :key="index"
           :class="`bg-${item.color}`"
@@ -515,10 +515,10 @@ onMounted(async () => {
               <!-- bar 圖 -->
               <div class="progress">
                 <el-progress
-                  :key="item.id"
-                  :percentage="item.value"
-                  :color="item.color"
-                  :format="() => `${item.vote?.toLocaleString()}票`"
+                  :key="item.id || index"
+                  :percentage="item.value || 0"
+                  :color="item.color || '#4F8AAB'"
+                  :format="() => item.vote != null && !isNaN(item.vote) ? `${item.vote.toLocaleString()}票` : '0票'"
                   :stroke-width="item.strokeWidth || 20"
                 ></el-progress>
               </div>
@@ -531,6 +531,7 @@ onMounted(async () => {
       <div class="voitView voitView--isMobile" v-if="isMobile">
         <div
           class="voitView__item"
+          v-if="candidatePercentages.length > 0"
           v-for="(item, index) in candidatePercentages"
           :key="index"
           :class="`bg-${item.color}`"
@@ -550,10 +551,10 @@ onMounted(async () => {
               <!-- bar 圖 -->
               <div class="progress">
                 <el-progress
-                  :key="item.id"
-                  :percentage="item.value"
-                  :color="item.color"
-                  :format="() => `${item.percentage.toLocaleString()}票`"
+                  :key="item.id || index"
+                  :percentage="item.value || 0"
+                  :color="item.color || '#4F8AAB'"
+                  :format="() => item.vote != null && !isNaN(item.vote) ? `${item.vote.toLocaleString()}票` : '0票'"
                   :stroke-width="item.strokeWidth || 20"
                 ></el-progress>
               </div>
