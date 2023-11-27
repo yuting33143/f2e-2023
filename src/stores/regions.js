@@ -10,7 +10,7 @@ export const useRegionStore = defineStore('region', {
 
     // 選區代碼對應表
     regionMap: {
-      ALL: 'ALL', // 全國
+      L: 'ALL', // 全國
       A: 'TaipeiCity', // 臺北市
       B: 'TaizhongCity', // 臺中市
       G: 'YilanCounty', // 宜蘭
@@ -38,7 +38,7 @@ export const useRegionStore = defineStore('region', {
   }),
 
   actions: {
-    async fetchRegionData(regionCode = 'ALL') {
+    async fetchRegionData(regionCode) {
       let url = regionCode === 'ALL' ? '/2020_voit/ALL.json' : `/2020_voit/city/${regionCode}.json`;
 
       try {
@@ -47,12 +47,16 @@ export const useRegionStore = defineStore('region', {
           throw new Error(`HTTP Error! status: ${response.status}`);
         }
         const data = await response.json();
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid data format');
+        }
         this.originData[regionCode] = data;
         this.error = null;
-        return this.originData[regionCode];
+        return data;
       } catch (error) {
         this.error = error.toString();
         console.error('Error fetching region data:', error);
+        return null;
       }
     },
 
@@ -89,27 +93,33 @@ export const useRegionStore = defineStore('region', {
     getDistrictVotes(validData) {
       const districtVotes = {};
       validData.forEach(item => {
-        const districtName =
-          item['第15任總統副總統選舉候選人得票數一覽表'].trim() ||
-          item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`].trim();
+        let districtNameField =
+          item['第15任總統副總統選舉候選人得票數一覽表'] ||
+          item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`];
 
-        if (districtName && !['總　計', '行政區別'].includes(districtName)) {
+        if (!districtNameField) {
+          return;
+        }
+
+        const districtName = districtNameField.trim();
+        console.log(districtName);
+        if (!['總　計', '行政區別'].includes(districtName)) {
           districtVotes[districtName] = {
             candidate1: parseInt(item.Column2.replace(/,/g, '') || 0),
             candidate2: parseInt(item.Column3.replace(/,/g, '') || 0),
             candidate3: parseInt(item.Column4.replace(/,/g, '') || 0)
           };
         }
+        console.log(districtVotes);
       });
 
       return districtVotes;
     },
 
-    // 處理選票資料
     processVoteData(jsonData) {
       if (!Array.isArray(jsonData)) {
         console.error('jsonData is not an array');
-        return;
+        return null;
       }
 
       const validData = this.getValidData(jsonData);
@@ -118,107 +128,5 @@ export const useRegionStore = defineStore('region', {
 
       return { totalVotes, districtVotes };
     }
-
-    // async fetchRegionData(regionCode = 'ALL') {
-    //   let url;
-    //   if (regionCode === 'ALL') {
-    //     url = '/2020_voit/ALL.json';
-    //   } else {
-    //     url = `/2020_voit/city/${regionCode}.json`;
-    //   }
-    //   try {
-    //     const response = await fetch(url);
-    //     if (!response.ok) {
-    //       throw new Error(`HTTP Error! status: ${response.status}`); // 檢查響應狀態
-    //     }
-    //     const data = await response.json();
-    //     console.log(data);
-    //     // 存儲 data
-    //     this.originData[regionCode] = data;
-
-    //     console.log(this.originData);
-    //     // 如果成功則重置錯誤
-    //     this.error = null;
-
-    //     console.log(this.originData[regionCode]);
-    //     // 添加返回值
-    //     return this.originData[regionCode];
-    //   } catch (error) {
-    //     this.error = error.toString(); // 存儲錯誤信息
-    //     console.error('Error fetching region data:', error);
-    //   }
-    // },
-
-    // 處理 選票資料格式
-    // processVoitData(jsonData) {
-    //   const { regionName } = this;
-    //   // 確保 jsonData 是一個陣列
-    //   console.log(jsonData);
-    //   if (!Array.isArray(jsonData)) {
-    //     console.error('jsonData is not an array');
-    //     return;
-    //   }
-
-    //   // console.log(jsonData);
-    //   let TotalVotes = {};
-    //   let districtVotes = {};
-
-    //   const validData = jsonData.filter(
-    //     item =>
-    //       ((item != null || undefined) &&
-    //         item['第15任總統副總統選舉候選人得票數一覽表'] !== '行政區別') ||
-    //       item[`第15任總統副總統選舉候選人在${regionName}各鄉(鎮、市、區)得票數一覽表`] !==
-    //         '行政區別'
-    //   ); // 排除 null 和 undefined 值
-    //   console.log(validData);
-
-    //   // 處理總票數
-    //   const totalVoteEntry = validData.find(
-    //     item =>
-    //       (item && item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計') ||
-    //       item[`第15任總統副總統選舉候選人在${regionName}各鄉(鎮、市、區)得票數一覽表`] === '總　計'
-    //   );
-    //   console.log(totalVoteEntry);
-
-    //   if (totalVoteEntry) {
-    //     TotalVotes = {
-    //       candidate1: parseInt(
-    //         totalVoteEntry.Column2 ? totalVoteEntry.Column2.replace(/,/g, '') : 0
-    //       ),
-    //       candidate2: parseInt(
-    //         totalVoteEntry.Column3 ? totalVoteEntry.Column3.replace(/,/g, '') : 0
-    //       ),
-    //       candidate3: parseInt(
-    //         totalVoteEntry.Column4 ? totalVoteEntry.Column4.replace(/,/g, '') : 0
-    //       )
-    //     };
-    //     console.log(TotalVotes);
-    //   }
-
-    //   // 處理各地區票數
-    //   validData.forEach(item => {
-    //     if (
-    //       (item &&
-    //         item['第15任總統副總統選舉候選人得票數一覽表'] &&
-    //         !item['第15任總統副總統選舉候選人得票數一覽表'].includes('總　計' || '行政區別')) ||
-    //       (item[`第15任總統副總統選舉候選人在${regionName}各鄉(鎮、市、區)得票數一覽表`] &&
-    //         !item[`第15任總統副總統選舉候選人在${regionName}各鄉(鎮、市、區)得票數一覽表`].includes(
-    //           '總　計' || '行政區別'
-    //         ))
-    //     ) {
-    //       const district =
-    //         item['第15任總統副總統選舉候選人得票數一覽表'].trim() ||
-    //         item[`第15任總統副總統選舉候選人在${regionName}各鄉(鎮、市、區)得票數一覽表`].trim();
-    //       districtVotes[district] = {
-    //         candidate1: parseInt(item.Column2 ? item.Column2.replace(/,/g, '') : 0),
-    //         candidate2: parseInt(item.Column3 ? item.Column3.replace(/,/g, '') : 0),
-    //         candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, '') : 0)
-    //       };
-    //     }
-    //   });
-    //   console.log(TotalVotes, districtVotes);
-
-    //   return { TotalVotes, districtVotes };
-    // },
   }
 });
