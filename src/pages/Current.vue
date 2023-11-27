@@ -383,6 +383,16 @@ const handleUpdateSelectArea = updatedArea => {
   SelectArea.value = updatedArea;
   // console.log('傳出來的', SelectArea.value);
 };
+
+function clickDrawer() {
+  showDrawer.value = true;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  showDrawer.value = false;
+  document.body.style.overflow = '';
+}
 </script>
 
 <template>
@@ -417,7 +427,7 @@ const handleUpdateSelectArea = updatedArea => {
         </span>
 
         <!-- drawer 測試按鈕 -->
-        <el-button class="onDrawer" @click="showDrawer = true">onDrawer</el-button>
+        <el-button class="onDrawer" @click="clickDrawer">onDrawer</el-button>
 
         <!-- 搜尋 dialog -->
         <el-dialog dialog v-model="centerDialogVisible" center v-if="isMobile">
@@ -588,16 +598,9 @@ const handleUpdateSelectArea = updatedArea => {
       </div>
 
       <!-- drawer -->
-      <el-drawer
-        v-model="showDrawer"
-        direction="ltr"
-        :with-header="false"
-        size="50%"
-        class="nav-dialog"
-        v-if="!isMobile"
-      >
+      <div class="nav-dialog" v-show="!isMobile" :class="{ 'dialog-open': showDrawer }">
         <!-- close -->
-        <div class="custom-close-icon" @click="showDrawer = false">
+        <div class="custom-close-icon" @click="closeDrawer">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="48"
@@ -620,11 +623,9 @@ const handleUpdateSelectArea = updatedArea => {
           </svg>
         </div>
 
-        <template #header>
-          <div class="custom-header">
-            <div class="title">選區查詢</div>
-          </div>
-        </template>
+        <div class="custom-header">
+          <div class="dialog-title">各區票數</div>
+        </div>
 
         <div class="dialog-content">
           <!-- 左邊全區scalebar(各區票數) -->
@@ -656,6 +657,21 @@ const handleUpdateSelectArea = updatedArea => {
                 />
               </el-select>
             </div>
+            <!-- <div class="overview-content">
+              <div class="person">
+                <span class="flag">1</span>
+                <span class="text">喵喵</span>
+              </div>
+
+              <div class="tag">
+                <div class="text"></div>
+              </div>
+
+              <div class="">
+                <span class="vote"></span>
+                <span class="bar"></span>
+              </div>
+            </div> -->
 
             <div class="area area-left">
               <div class="left-title">
@@ -664,22 +680,6 @@ const handleUpdateSelectArea = updatedArea => {
               </div>
 
               <div class="left-info">
-                <div class="overview-content">
-                  <div class="person">
-                    <span class="flag">1</span>
-                    <span class="text">喵喵</span>
-                  </div>
-
-                  <div class="tag">
-                    <div class="text"></div>
-                  </div>
-
-                  <div class="">
-                    <span class="vote"></span>
-                    <span class="bar"></span>
-                  </div>
-                </div>
-
                 <div class="bar" v-for="(item, index) in testCountry" :key="index">
                   <div class="city">{{ item.city }}</div>
                   <ScaleBar
@@ -694,7 +694,7 @@ const handleUpdateSelectArea = updatedArea => {
             </div>
           </div>
         </div>
-      </el-drawer>
+      </div>
 
       <!-- 地圖的popover資訊 -->
       <div class="popover">
@@ -1058,9 +1058,23 @@ const handleUpdateSelectArea = updatedArea => {
 
 .nav-dialog {
   background: $white !important;
+  position: fixed;
+  top: 99px;
+  left: -610px;
+  z-index: 100;
+  height: calc(100% - 99px);
+  padding: 40px;
+  box-sizing: border-box;
+  width: 600px;
+  transition: 0.5s ease; // 添加这行代码
+
+  &.dialog-open {
+    left: 0px;
+  }
 
   .custom-close-icon {
     cursor: pointer;
+    margin-bottom: 20px;
   }
   .el-drawer__close-btn {
     display: none;
@@ -1068,27 +1082,10 @@ const handleUpdateSelectArea = updatedArea => {
       color: $white;
     }
   }
-
-  :deep(.el-dialog__header) {
-    flex-direction: column-reverse;
-    align-items: flex-start;
-    color: #282d3a;
-    gap: 38px;
-
-    @include pad() {
-      // height: 60px;
-    }
-    .title {
-      @include header5;
-
-      @include pad() {
-        @include header4;
-      }
-    }
-    // .el-dialog__headerbtn {
-    //   display: none;
-    // }
+  .dialog-title {
+    @include header5;
   }
+
   .dialog-content {
     display: flex;
     flex-direction: column;
@@ -1098,13 +1095,41 @@ const handleUpdateSelectArea = updatedArea => {
 
     .area-wrapper {
       display: flex;
-      width: 80%;
+      width: 100%;
       flex-direction: column;
-      gap: 33px;
-      margin-top: 32px;
+      gap: 20px;
 
       @include pad {
         flex-direction: column-reverse;
+      }
+      .search {
+        width: 100%;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 10px;
+        .all-btn {
+          flex-grow: 0;
+          flex-shrink: 0;
+        }
+        .city-select {
+          min-width: 120px;
+          flex-grow: 1;
+          flex-shrink: 1;
+          flex-basis: 0;
+        }
+        .area-select {
+          min-width: 134px;
+          flex-grow: 1;
+          flex-shrink: 1;
+          flex-basis: 0;
+        }
+        .unit-select {
+          min-width: 115px;
+          flex-grow: 1;
+          flex-shrink: 1;
+          flex-basis: 0;
+        }
       }
       .area {
       }
@@ -1113,50 +1138,25 @@ const handleUpdateSelectArea = updatedArea => {
         box-shadow: 0px 0px 6px 0px rgba(206, 214, 226, 0.25);
         background-color: $white;
         // width: calc(100% - 248px);
-        height: 628px;
+        height: 386px;
         padding: 24px;
         box-sizing: border-box;
+        overflow: auto;
+        &::-webkit-scrollbar {
+          display: none;
+        }
+        scrollbar-width: none;
 
         @include pad {
           width: 100%;
           height: auto;
         }
 
-        .search {
-          width: 100%;
-          display: flex;
-          flex-wrap: nowrap;
-          justify-content: space-between;
-          gap: 10px;
-          .all-btn {
-            flex-grow: 0;
-            flex-shrink: 0;
-          }
-          .city-select {
-            min-width: 120px;
-            flex-grow: 1;
-            flex-shrink: 1;
-            flex-basis: 0;
-          }
-          .area-select {
-            min-width: 134px;
-            flex-grow: 1;
-            flex-shrink: 1;
-            flex-basis: 0;
-          }
-          .unit-select {
-            min-width: 115px;
-            flex-grow: 1;
-            flex-shrink: 1;
-            flex-basis: 0;
-          }
-        }
         .left-title {
           display: flex;
           align-items: center;
           @include text5;
           color: $gray3;
-          margin-top: 24px;
 
           @include pad {
             margin-top: 0;
@@ -1194,7 +1194,7 @@ const handleUpdateSelectArea = updatedArea => {
           .bar {
             display: flex;
             align-items: center;
-            margin-bottom: 32px;
+            margin-bottom: 25px;
 
             @include pad {
               margin-bottom: 28px;
