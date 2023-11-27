@@ -286,7 +286,7 @@ function backToAll() {
 
 function resetMap() {
   // 設置初始中心點和縮放比例
-  projection.value.center([121, 24.25]).scale(9000);
+  projection.value.center(location).scale(scale);
   path.value = d3.geoPath(projection.value);
 
   // 重新繪製地圖
@@ -311,46 +311,34 @@ watch(
 );
 
 function mapScaleSet() {
-  console.log(width.value);
   if (width.value >= 1700) {
-    console.log('bbb');
     scale = 9000;
     location = [121, 24.5];
   } else if (width.value < 1700 && width.value >= 1400) {
-    console.log('ccc');
     scale = 9000;
     location = [121.7, 23.9];
   } else if (width.value < 1400 && width.value >= 1156) {
-    console.log('ccc');
     scale = 9000;
     location = [122.25, 23.9];
   } else if (width.value < 1156 && width.value >= 1070) {
-    console.log('ccc');
     scale = 9000;
     location = [122.5, 23.9];
   } else if (width.value < 1070 && width.value >= 1000) {
-    console.log('ccc');
     scale = 9000;
     location = [122.65, 23.9];
   } else if (width.value < 1000 && width.value >= 700) {
-    console.log('ccc');
     scale = 9000;
     location = [120.7, 24];
   } else if (width.value < 700 && width.value >= 570) {
     scale = 5500;
     location = [122, 23.5];
-    console.log('ddd');
   } else if (width.value < 570 && width.value >= 436) {
     scale = 5500;
     location = [123, 23.5];
-    console.log('eee');
   } else if (width.value < 436) {
     scale = 5500;
     location = [123.5, 23.5];
-    console.log('eee');
   }
-  console.log('scale', scale);
-  console.log('location', location);
 }
 </script>
 

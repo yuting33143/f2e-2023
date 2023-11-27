@@ -14,13 +14,13 @@ import dogBg from '@/assets/images/bg-blue.png';
 import birdBg from '@/assets/images/bg-green.png';
 import { useWindowSizeStore } from '@/stores/windowSize.js';
 import { useRegionStore } from '@/stores/regions.js';
+import D3Map from '@/components/D3Map.vue';
 
 const windowSizeStore = useWindowSizeStore();
 const isMobile = computed(() => windowSizeStore.width <= 768);
 
 // ===================== Pina 控制選票 Data 取得 ===================== //
 const regionStore = useRegionStore();
-
 
 // ===================== 地圖的popover資訊(在 “搜尋 dialog” 選擇完後顯示資訊) ===================== //
 // 地圖的popover資訊 、people-group 的資料
@@ -194,7 +194,6 @@ const candidatePercentages = computed(() => {
   }));
 });
 
-
 // 更新候选人总票数和各区票数
 function _updateCandidatesVotes(candidates, totalVotes, districtVotes) {
   candidates.forEach((candidate, index) => {
@@ -204,8 +203,7 @@ function _updateCandidatesVotes(candidates, totalVotes, districtVotes) {
 }
 
 // 取得縣市資料
-const handleRegionChange = async (regionValue) => {
-
+const handleRegionChange = async regionValue => {
   const letterPart = regionValue && regionValue.slice(0, 1);
   const regionCode = regionStore.regionMap[letterPart];
 
@@ -226,42 +224,32 @@ const handleRegionChange = async (regionValue) => {
     // 更新候选人信息
     _updateCandidatesVotes(candidate.value, totalVotes, districtVotes);
     _updateCandidatesVotes(candidateView.value, totalVotes, districtVotes);
-
   } catch (error) {
     console.error('Error handling region change:', error);
   }
 };
 
-
 // 選擇縣市時，過濾出該縣市的鄉鎮市區
-const onCityChange = (ID) => {
+const onCityChange = ID => {
   filteredTowns.value = townsOptions.value.filter(item => item.ID.slice(0, 1) === ID);
   selectedTownCode.value = null;
 };
 
-const searchEventHandler = (regionValue) => {
+// 選擇鄉鎮市區時，過濾出該鄉鎮市區的村里
+const onTownChange = townCode => {
+  filteredVillages.value = villageOptions.value.filter(
+    item => item.CODE.substring(0, 5) === townCode
+  );
+  selectedVillage.value = null;
+};
+
+const searchEventHandler = regionValue => {
   handleRegionChange(regionValue);
 };
 
-// 搜索 click 事件
+// 搜索位置
 function searchLocation() {
-  console.log(selectedTownNAME.value);
-  // 搜索選中城鎮區区的 data
-  if (selectedTownNAME.value) {
-    console.log(regionStore.districtDataAdjusted);
-    console.log(regionStore.totalVotesDataAdjusted);
-    const districtData = regionStore.districtDataAdjusted[selectedTownNAME.value];
-    const totalVotes = regionStore.totalVotesDataAdjusted;
-
-    console.log(districtData);
-    console.log(totalVotes);
-    if (districtData) {
-      // 更新 candidate 和 candidateView
-      _updateCandidatesVotes(candidate.value, totalVotes, districtData);
-      _updateCandidatesVotes(candidateView.value, totalVotes, districtData);
-    }
-  }
-
+  searchEventHandler();
   centerDialogVisible.value = false;
 }
 
@@ -287,8 +275,8 @@ watch(selectedCityCode, (newVal, oldVal) => {
 // 觀察選擇框的選中值，並更新 store 的 regionName
 watch(selectedTownCode, (newVal, oldVal) => {
   if (newVal) {
-    const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 4) === newVal);
-    if (selectedTown) { 
+    const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 1) === newVal);
+    if (selectedTown) {
       selectedTownNAME.value = selectedTown.NAME; // 這邊取得的 NAME，是鄉鎮市區的名稱，會用於查詢取得縣市顯示資料內的鄉鎮市區
 
       console.log(selectedTownNAME.value);
@@ -296,7 +284,7 @@ watch(selectedTownCode, (newVal, oldVal) => {
   }
 });
 
-// ==================== 取得坐標資料 ==================== // 
+// ==================== 取得坐標資料 ==================== //
 // 取得 市/縣 選項
 const COUNTY_FETCH = async () => {
   try {
@@ -343,15 +331,14 @@ const VILLAGE_FETCH = async () => {
       return {
         ID: element.properties.VILLAGECODE,
         CODE: element.properties.VILLAGECODE,
-        NAME: element.properties.VILLAGENAME,
-      }
+        NAME: element.properties.VILLAGENAME
+      };
     });
     console.log(villageOptions.value);
   } catch (error) {
     console.error('失敗:', error);
   }
 };
-
 
 // 搜尋位置的 dialog
 const openDialog = () => {
@@ -362,13 +349,24 @@ const openDialog = () => {
 // hook mounted
 onMounted(async () => {
   // 取得 市/縣 坐標選項
-  await COUNTY_FETCH(); 
+  await COUNTY_FETCH();
 
   // 取得 鄉鎮市區 坐標選項
   await TOWN_FETCH();
 
   await handleRegionChange('L'); // 預設全選
 });
+
+// TODO: 跟d3互傳的是這個 看在把searchResults的值改成這個之類的 這裡我測試先預設了 你可以刪掉 ㄏ
+const SelectArea = ref([
+  { id: 'J', name: '新竹縣' },
+  { id: 'J14', name: '尖石鄉' }
+]);
+
+const handleUpdateSelectArea = updatedArea => {
+  SelectArea.value = updatedArea;
+  // console.log('傳出來的', SelectArea.value);
+};
 </script>
 
 <template>
@@ -412,7 +410,8 @@ onMounted(async () => {
             <el-select
               v-model="selectedCityCode"
               :placeholder="$t('current.selectCityPlaceholder')"
-              @change="onCityChange(selectedCityCode), searchEventHandler(selectedCityCode)">
+              @change="onCityChange(selectedCityCode), searchEventHandler(selectedCityCode)"
+            >
               <el-option
                 v-for="item in cityOptions"
                 :key="item.ID"
@@ -425,7 +424,8 @@ onMounted(async () => {
             <el-select
               v-model="selectedTownCode"
               :placeholder="$t('current.selectNeighborhoodPlaceholder')"
-              @change="searchEventHandler(selectedTownCode)">
+              @change="searchEventHandler(selectedTownCode)"
+            >
               <el-option
                 v-for="item in filteredTowns"
                 :key="item.ID"
@@ -433,7 +433,6 @@ onMounted(async () => {
                 :value="item.ID"
               />
             </el-select>
-
           </span>
 
           <!-- 底部按钮 -->
@@ -703,23 +702,24 @@ onMounted(async () => {
     <!-- 右邊 -->
     <div class="right">
       <!-- map -->
-      <div></div>
+      <D3Map :initialSelectArea="SelectArea" @updateSelectArea="handleUpdateSelectArea"></D3Map>
     </div>
   </div>
 </template>
 <style lang="scss" scoped>
 .current-wrapper {
   background-color: $blue-bg;
-  height: 1000px;
+  // height: 1000px;
   padding: 60px 3%;
   display: flex;
 
   @include rwd() {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   @include pad {
     padding-top: 30px;
+    height: auto;
   }
   .left {
     width: 60%;
@@ -1014,8 +1014,17 @@ onMounted(async () => {
 
   .right {
     width: 40%;
+    position: fixed;
+    right: 0;
+    max-height: calc(100vh - 160px);
     @include rwd() {
       width: 100%;
+      position: static;
+      height: 600px;
+      // padding-top: 69px;
+    }
+    @include pad {
+      height: 400px;
     }
   }
 }
