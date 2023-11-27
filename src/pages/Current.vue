@@ -205,6 +205,7 @@ function _updateCandidatesVotes(candidates, totalVotes, districtVotes) {
 
 // 取得縣市資料
 const handleRegionChange = async (regionValue) => {
+
   const letterPart = regionValue && regionValue.slice(0, 1);
   const regionCode = regionStore.regionMap[letterPart];
 
@@ -238,19 +239,29 @@ const onCityChange = (ID) => {
   selectedTownCode.value = null;
 };
 
-// 選擇鄉鎮市區時，過濾出該鄉鎮市區的村里
-const onTownChange = (townCode) => {
-  filteredVillages.value = villageOptions.value.filter(item => item.CODE.substring(0, 5) === townCode);
-  selectedVillage.value = null;
-};
-
 const searchEventHandler = (regionValue) => {
   handleRegionChange(regionValue);
 };
 
-// 搜索位置
+// 搜索 click 事件
 function searchLocation() {
-  searchEventHandler();
+  console.log(selectedTownNAME.value);
+  // 搜索選中城鎮區区的 data
+  if (selectedTownNAME.value) {
+    console.log(regionStore.districtDataAdjusted);
+    console.log(regionStore.totalVotesDataAdjusted);
+    const districtData = regionStore.districtDataAdjusted[selectedTownNAME.value];
+    const totalVotes = regionStore.totalVotesDataAdjusted;
+
+    console.log(districtData);
+    console.log(totalVotes);
+    if (districtData) {
+      // 更新 candidate 和 candidateView
+      _updateCandidatesVotes(candidate.value, totalVotes, districtData);
+      _updateCandidatesVotes(candidateView.value, totalVotes, districtData);
+    }
+  }
+
   centerDialogVisible.value = false;
 }
 
@@ -276,7 +287,7 @@ watch(selectedCityCode, (newVal, oldVal) => {
 // 觀察選擇框的選中值，並更新 store 的 regionName
 watch(selectedTownCode, (newVal, oldVal) => {
   if (newVal) {
-    const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 1) === newVal);
+    const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 4) === newVal);
     if (selectedTown) { 
       selectedTownNAME.value = selectedTown.NAME; // 這邊取得的 NAME，是鄉鎮市區的名稱，會用於查詢取得縣市顯示資料內的鄉鎮市區
 

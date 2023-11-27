@@ -3,10 +3,13 @@ import { defineStore } from 'pinia';
 // 取得選票資料
 export const useRegionStore = defineStore('region', {
   state: () => ({
-    originData: {}, // 原始資料
+    originData: {}, // 原始 json 資料
+    districtDataAdjusted: {}, // 處理過的 "各地區票數"
+    totalVotesDataAdjusted: {}, // 處理過的 "各地區票數"
     totalVotes: {}, // 總票數
     districtVotes: {}, // 各地區票數
     regionName: '', // 選區名稱
+    Code: '', // 選區代碼
 
     // 選區代碼對應表
     regionMap: {
@@ -39,6 +42,7 @@ export const useRegionStore = defineStore('region', {
 
   actions: {
     async fetchRegionData(regionCode) {
+      this.Code = regionCode;
       let url = regionCode === 'ALL' ? '/2020_voit/ALL.json' : `/2020_voit/city/${regionCode}.json`;
 
       try {
@@ -51,6 +55,7 @@ export const useRegionStore = defineStore('region', {
           throw new Error('Invalid data format');
         }
         this.originData[regionCode] = data;
+
         this.error = null;
         return data;
       } catch (error) {
@@ -73,25 +78,61 @@ export const useRegionStore = defineStore('region', {
 
     // 取得總票數
     getTotalVotes(validData) {
-      const totalVoteEntry = validData.find(
-        item =>
-          item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計' ||
-          item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`] ===
-            '總　計'
-      );
+      console.log(this.regionName);
+      if (this.regionName || this.Code === 'ALL') {
+        const totalVoteEntry = validData.find(
+          item =>
+            item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計' ||
+            item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`] ===
+              '總　計'
+        );
 
-      return totalVoteEntry
-        ? {
-            candidate1: parseInt(totalVoteEntry.Column2.replace(/,/g, '') || 0),
-            candidate2: parseInt(totalVoteEntry.Column3.replace(/,/g, '') || 0),
-            candidate3: parseInt(totalVoteEntry.Column4.replace(/,/g, '') || 0)
-          }
-        : {};
+        return totalVoteEntry
+          ? {
+              candidate1: parseInt(totalVoteEntry.Column2.replace(/,/g, '') || 0),
+              candidate2: parseInt(totalVoteEntry.Column3.replace(/,/g, '') || 0),
+              candidate3: parseInt(totalVoteEntry.Column4.replace(/,/g, '') || 0)
+            }
+          : {};
+      }
     },
+    // getDistrictVotes(validData) {
+    //   const districtVotes = {};
 
-    // 取得各地區票數
+    //   // 检查是否有有效数据
+    //   if (validData.length === 0) {
+    //     return {};
+    //   }
+    //   if (this.regionName || this.Code === 'ALL') {
+    //     validData.forEach(item => {
+    //       let districtNameField =
+    //         item['第15任總統副總統選舉候選人得票數一覽表'] ||
+    //         item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`];
+
+    //       if (!districtNameField) {
+    //         return;
+    //       }
+
+    //       const districtName = districtNameField.trim();
+
+    //       if (!['總　計', '行政區別'].includes(districtName)) {
+    //         districtVotes[districtName] = {
+    //           candidate1: parseInt(item.Column2.replace(/,/g, '') || 0),
+    //           candidate2: parseInt(item.Column3.replace(/,/g, '') || 0),
+    //           candidate3: parseInt(item.Column4.replace(/,/g, '') || 0)
+    //         };
+    //       }
+    //     });
+    //   }
+    //   return districtVotes;
+    // },
     getDistrictVotes(validData) {
       const districtVotes = {};
+
+      if (validData.length === 0) {
+        return {};
+      }
+
       validData.forEach(item => {
         let districtNameField =
           item['第15任總統副總統選舉候選人得票數一覽表'] ||
@@ -102,15 +143,14 @@ export const useRegionStore = defineStore('region', {
         }
 
         const districtName = districtNameField.trim();
-        console.log(districtName);
+
         if (!['總　計', '行政區別'].includes(districtName)) {
           districtVotes[districtName] = {
-            candidate1: parseInt(item.Column2.replace(/,/g, '') || 0),
-            candidate2: parseInt(item.Column3.replace(/,/g, '') || 0),
-            candidate3: parseInt(item.Column4.replace(/,/g, '') || 0)
+            candidate1: parseInt(item.Column2 ? item.Column2.replace(/,/g, '') : 0),
+            candidate2: parseInt(item.Column3 ? item.Column3.replace(/,/g, '') : 0),
+            candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, '') : 0)
           };
         }
-        console.log(districtVotes);
       });
 
       return districtVotes;
@@ -121,10 +161,14 @@ export const useRegionStore = defineStore('region', {
         console.error('jsonData is not an array');
         return null;
       }
-
       const validData = this.getValidData(jsonData);
+
       const totalVotes = this.getTotalVotes(validData);
+
       const districtVotes = this.getDistrictVotes(validData);
+
+      this.totalVotesDataAdjusted = totalVotes;
+      this.districtDataAdjusted = districtVotes;
 
       return { totalVotes, districtVotes };
     }
