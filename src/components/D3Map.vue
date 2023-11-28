@@ -135,7 +135,7 @@ function updateMapBasedOnSelectArea(initialSelectArea) {
     // const x = centroid[0];
     // const y = centroid[1];
 
-    projection.value.center(location).scale(scale);
+    // projection.value.center(location).scale(scale);
 
     path.value = d3.geoPath(projection.value);
     d3.selectAll('.county, .town').attr('d', path.value);
