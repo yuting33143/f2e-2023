@@ -163,8 +163,6 @@ const testCountry = [
 
 // D3 地圖
 const SelectArea = ref([]);
-SelectArea.value = [{ id: 'G' }];
-console.log('測試', SelectArea.value);
 const handleUpdateSelectArea = updatedArea => {
   SelectArea.value = updatedArea;
   // console.log('傳出來的', SelectArea.value);
