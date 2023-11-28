@@ -161,6 +161,24 @@ const testCountry = [
   }
 ];
 
+// D3 地圖
+const SelectArea = ref([]);
+
+const handleUpdateSelectArea = updatedArea => {
+  SelectArea.value = updatedArea;
+  // console.log('傳出來的', SelectArea.value);
+};
+
+function clickDrawer() {
+  showDrawer.value = true;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  showDrawer.value = false;
+  document.body.style.overflow = '';
+}
+
 // 計算 popover 的總票數
 const popoverTotalVotes = computed(() => {
   return candidate.value.reduce((sum, item) => sum + item.vote, 0);
@@ -222,7 +240,7 @@ const handleRegionChange = async (regionValue = 'L') => {
   try {
     const regionData = await regionStore.fetchRegionData(regionCode);
     regionStore.regionData = regionData;
-    // regionData = data; // 賦值給 regionData
+    
     if (!regionData) {
       console.error('No data returned for region:', regionCode);
       return;
@@ -247,9 +265,23 @@ const handleRegionChange = async (regionValue = 'L') => {
 
 
 // 選擇縣市時，過濾出該縣市的鄉鎮市區 選項（用於城鎮區的select）
-const onCityChange = ID => {
-  filteredTowns.value = townsOptions.value.filter(item => item.ID.slice(0, 1) === ID);
+const onCityChange = id => {
+  const SelectAreaName = cityOptions.value.filter(item => item.ID === id);
+  SelectArea.value.push({
+    id,
+    name: SelectAreaName[0].NAME
+  });
+  filteredTowns.value = townsOptions.value.filter(item => item.ID.slice(0, 1) === id);
   selectedTownCode.value = null;
+};
+
+
+const onTownChange = id => {
+  const SelectAreaName = filteredTowns.value.filter(item => item.ID === id);
+  SelectArea.value.push({
+    id,
+    name: SelectAreaName[0].NAME
+  });
 };
 
 // drawer 中的 ”搜尋“ 選擇框的選中值
@@ -387,26 +419,7 @@ onMounted(async () => {
   await handleRegionChange('L'); // 預設全國資料
 });
 
-// TODO: 跟d3互傳的是這個 看在把searchResults的值改成這個之類的 這裡我測試先預設了 你可以刪掉 ㄏ
-const SelectArea = ref([
-  { id: 'J', name: '新竹縣' },
-  { id: 'J14', name: '尖石鄉' }
-]);
 
-const handleUpdateSelectArea = updatedArea => {
-  SelectArea.value = updatedArea;
-  // console.log('傳出來的', SelectArea.value);
-};
-
-function clickDrawer() {
-  showDrawer.value = true;
-  document.body.style.overflow = 'hidden';
-}
-
-function closeDrawer() {
-  showDrawer.value = false;
-  document.body.style.overflow = '';
-}
 </script>
 
 <template>
@@ -464,6 +477,7 @@ function closeDrawer() {
             <el-select
               v-model="selectedTownCode"
               :placeholder="$t('current.selectNeighborhoodPlaceholder')"
+              @change="onTownChange(selectedTownCode)"
             >
               <el-option
                 v-for="item in filteredTowns"
