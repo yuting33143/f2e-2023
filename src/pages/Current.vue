@@ -163,7 +163,8 @@ const testCountry = [
 
 // D3 地圖
 const SelectArea = ref([]);
-
+SelectArea.value = [{ id: 'G' }];
+console.log('測試', SelectArea.value);
 const handleUpdateSelectArea = updatedArea => {
   SelectArea.value = updatedArea;
   // console.log('傳出來的', SelectArea.value);
@@ -211,11 +212,11 @@ function _updateCandidatesVotes(candidates = [], totalVotes = {}, districtVotes 
       candidate.vote = totalVotes[`candidate${index + 1}`];
     }
   });
-  
+
   // 更新各區域票數
   candidates.forEach((viewItem, index) => {
     const districtVote = districtVotes[regionStore.regionName];
-    
+
     if (districtVote && districtVote[`candidate${index + 1}`]) {
       viewItem.vote = districtVote[`candidate${index + 1}`];
     }
@@ -226,7 +227,7 @@ function _updateCandidatesVotes(candidates = [], totalVotes = {}, districtVotes 
  * 預設傳入 regionCode 為 'L'，即全國
  * 依據傳入的 regionValue 取得區域資料
  * 並更新 regionData 和 candidateView
- * @param {String} regionValue 
+ * @param {String} regionValue
  */
 const handleRegionChange = async (regionValue = 'L') => {
   const letterPart = regionValue.slice(0, 1);
@@ -240,14 +241,14 @@ const handleRegionChange = async (regionValue = 'L') => {
   try {
     const regionData = await regionStore.fetchRegionData(regionCode);
     regionStore.regionData = regionData;
-    
+
     if (!regionData) {
       console.error('No data returned for region:', regionCode);
       return;
     }
-    
+
     const { totalVotes } = regionStore.processVoteData(regionData);
-    
+
     if (totalVotes === null) {
       console.error('Invalid vote data:', totalVotes);
       return;
@@ -256,32 +257,27 @@ const handleRegionChange = async (regionValue = 'L') => {
     // 顯示總票數
     _updateCandidatesVotes(candidate.value, totalVotes);
     _updateCandidatesVotes(candidateView.value, totalVotes);
-    
-    
   } catch (error) {
     console.error('Error handling region change:', error);
   }
 };
 
-
 // 選擇縣市時，過濾出該縣市的鄉鎮市區 選項（用於城鎮區的select）
 const onCityChange = id => {
   const SelectAreaName = cityOptions.value.filter(item => item.ID === id);
-  SelectArea.value.push({
-    id,
-    name: SelectAreaName[0].NAME
-  });
+  SelectArea.value = [
+    {
+      id,
+      name: SelectAreaName[0].NAME
+    }
+  ];
   filteredTowns.value = townsOptions.value.filter(item => item.ID.slice(0, 1) === id);
   selectedTownCode.value = null;
 };
 
-
 const onTownChange = id => {
   const SelectAreaName = filteredTowns.value.filter(item => item.ID === id);
-  SelectArea.value.push({
-    id,
-    name: SelectAreaName[0].NAME
-  });
+  SelectArea.value = [...SelectArea.value.slice(0, 1), { id, name: SelectAreaName[0].NAME }];
 };
 
 // drawer 中的 ”搜尋“ 選擇框的選中值
@@ -290,39 +286,37 @@ const onAreaCityChange = ID => {
   areaTownSelected.value = null;
 };
 
-
 /**
  * 監聽選擇框的選中值，並更新 store 的 regionName
  * 選中的縣市名稱會用於 PINIA 內部的資料查詢，並 return 該選中的鄉鎮區域
  */
 // 觀察選擇框的選中值，並更新 store 的 regionName
-watch(selectedCityCode, async(newVal, _) => {
+watch(selectedCityCode, async (newVal, _) => {
   if (newVal) {
     // 依據選中的縣市，更新 store 的 originalRegionData
     await handleRegionChange(newVal);
 
     const selectedCity = cityOptions.value.find(item => item.ID.slice(0, 1) === newVal);
-    
+
     if (selectedCity) {
       regionStore.regionName = selectedCity.NAME; // 更新 store 的 regionName，選中的 縣市名稱 會用於 PINIA內部的資料查詢
     }
     const { totalVotes } = regionStore.processVoteData(regionStore.regionData);
-    
+
     if (totalVotes) {
       // 將找到的資料更新到 Candidate
       _updateCandidatesVotes(candidate.value, totalVotes);
       _updateCandidatesVotes(candidateView.value, totalVotes);
     }
-
   }
 });
 
 // 當選擇鄉鎮區時，使用 Name 查找對應資料
-watch(selectedTownCode, (newVal) => {
+watch(selectedTownCode, newVal => {
   if (newVal) {
     console.log(newVal);
     const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 3) === newVal);
-    
+
     if (selectedTown) {
       console.log(selectedTown);
       regionStore.regionName = selectedTown.NAME;
@@ -340,7 +334,7 @@ watch(selectedTownCode, (newVal) => {
   }
   // 關閉跳窗
   centerDialogVisible.value = false;
-  
+
   // 清空選中的縣市選項
   selectedCityCode.value = null;
   selectedTownCode.value = null;
@@ -360,7 +354,7 @@ const COUNTY_FETCH = async () => {
         NAME: element.properties.COUNTYNAME
       };
     });
-    
+
     // Drawer 中的 select 選項
     areaCityOptions.value = jsonData.features.map(element => {
       return {
@@ -369,7 +363,6 @@ const COUNTY_FETCH = async () => {
         NAME: element.properties.COUNTYNAME
       };
     });
-    
   } catch (error) {
     console.error('失敗:', error);
   }
@@ -418,15 +411,13 @@ onMounted(async () => {
 
   await handleRegionChange('L'); // 預設全國資料
 });
-
-
 </script>
 
 <template>
   <div class="current-wrapper">
     <div class="left">
       <div class="title">
-        <p>{{ $t('current.title') }}</p>
+        <p @click="testArea">{{ $t('current.title') }}</p>
 
         <!-- 搜尋按鈕 -->
         <span class="search" @click="openDialog">
@@ -457,7 +448,14 @@ onMounted(async () => {
         <el-button class="onDrawer" @click="clickDrawer">onDrawer</el-button>
 
         <!-- 搜尋 dialog -->
-        <el-dialog dialog v-model="centerDialogVisible" title="搜尋" width="30%" center @close="selectedCityCode = '', selectedTownCode = ''">
+        <el-dialog
+          dialog
+          v-model="centerDialogVisible"
+          title="搜尋"
+          width="30%"
+          center
+          @close="(selectedCityCode = ''), (selectedTownCode = '')"
+        >
           <span>
             <!-- city select -->
             <el-select
@@ -654,7 +652,12 @@ onMounted(async () => {
           <div class="area-wrapper">
             <div class="search">
               <el-button v-model="areaAllSelected" class="all-btn">全臺</el-button>
-              <el-select v-model="areaCitySelected" class="city-select" placeholder="縣市" @change="onAreaCityChange">
+              <el-select
+                v-model="areaCitySelected"
+                class="city-select"
+                placeholder="縣市"
+                @change="onAreaCityChange"
+              >
                 <el-option
                   v-for="item in areaCityOptions"
                   :key="item.ID"
@@ -696,7 +699,7 @@ onMounted(async () => {
       </div>
 
       <!-- 地圖的popover資訊 -->
-      <div class="popover">
+      <div class="popover" v-if="false">
         <div class="popover-top">
           <div class="popover-area">台北市士林區</div>
         </div>

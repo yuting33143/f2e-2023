@@ -357,7 +357,7 @@ function mapScaleSet() {
 <style lang="scss" scoped>
 .back {
   position: fixed;
-  top: 130px;
+  top: 157px;
   left: 60%;
   display: flex;
   cursor: pointer;

@@ -45,7 +45,6 @@ function changeYearTab(year) {
   selectedYearTab.value = year;
   const period = yearTab.find(item => item.year === year).period;
   selectedPeriod.value = period;
-  SelectArea.value = [];
 }
 
 function changePeriod(direction) {
