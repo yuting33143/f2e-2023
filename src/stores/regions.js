@@ -4,13 +4,12 @@ import { defineStore } from 'pinia';
 export const useRegionStore = defineStore('region', {
   state: () => ({
     originData: {}, // 原始 json 資料
+    regionData: {}, // 全部資料
     totalVotes: {}, // 總票數
     districtVotes: {}, // 各地區票數
     regionName: '', // 選區名稱
     Code: '', // 選區代碼
     year: '2020', // 年份
-    totalVotesDataAdjusted: {}, // 總票數調整後資料
-    districtDataAdjusted: {}, // 各地區票數調整後資料
 
     // 選區代碼對應表
     regionMap: {
@@ -42,12 +41,13 @@ export const useRegionStore = defineStore('region', {
   }),
 
   actions: {
-    async fetchRegionData(regionCode) {
-      this.Code = regionCode;
+    async fetchRegionData(jsonName) {
+      this.Code = jsonName;
+      console.log(jsonName);
       let url =
-        regionCode === 'ALL'
+        jsonName === 'ALL'
           ? `/${this.year}_voit/ALL.json`
-          : `/${this.year}_voit/city/${regionCode}.json`;
+          : `/${this.year}_voit/city/${jsonName}.json`;
 
       try {
         const response = await fetch(url);
@@ -58,7 +58,7 @@ export const useRegionStore = defineStore('region', {
         if (!data || typeof data !== 'object') {
           throw new Error('Invalid data format');
         }
-        this.originData[regionCode] = data;
+        this.originData[jsonName] = data;
 
         this.error = null;
         return data;
@@ -95,7 +95,11 @@ export const useRegionStore = defineStore('region', {
           ? {
               candidate1: parseInt(totalVoteEntry.Column2.replace(/,/g, '') || 0),
               candidate2: parseInt(totalVoteEntry.Column3.replace(/,/g, '') || 0),
-              candidate3: parseInt(totalVoteEntry.Column4.replace(/,/g, '') || 0)
+              candidate3: parseInt(totalVoteEntry.Column4.replace(/,/g, '') || 0),
+
+              // 有效票數 、 無效票數
+              validVotes: parseInt(totalVoteEntry.Column5.replace(/,/g, '') || 0),
+              invalidVotes: parseInt(totalVoteEntry.Column6.replace(/,/g, '') || 0)
             }
           : {};
       }
@@ -122,7 +126,11 @@ export const useRegionStore = defineStore('region', {
           districtVotes[districtName] = {
             candidate1: parseInt(item.Column2 ? item.Column2.replace(/,/g, '') : 0),
             candidate2: parseInt(item.Column3 ? item.Column3.replace(/,/g, '') : 0),
-            candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, '') : 0)
+            candidate3: parseInt(item.Column4 ? item.Column4.replace(/,/g, '') : 0),
+
+            // 有效票數 、 無效票數
+            validVotes: parseInt(item.Column5 ? item.Column5.replace(/,/g, '') : 0),
+            invalidVotes: parseInt(item.Column6 ? item.Column6.replace(/,/g, '') : 0)
           };
         }
       });
@@ -130,24 +138,17 @@ export const useRegionStore = defineStore('region', {
       return districtVotes;
     },
 
-    processVoteData(jsonData) {
-      if (!Array.isArray(jsonData)) {
-        console.error('jsonData is not an array');
-        return { totalVotes: {}, districtVotes: {} }; // 返回空對象以避免解構賦值時出錯
-      }
+    processVoteData(regionData) {
+      const validData = this.getValidData(regionData);
+      console.log(validData);
 
-      const validData = this.getValidData(jsonData);
       const totalVotes = this.getTotalVotes(validData);
+      this.totalVotes = totalVotes;
+      console.log(totalVotes);
+
       const districtVotes = this.getDistrictVotes(validData);
-
-      // 處理過的 "總票數"
-      this.totalVotesDataAdjusted = totalVotes || {};
-
-      // 處理過的 "各地區票數"
-      this.districtDataAdjusted = districtVotes || {};
-
-      console.log(this.districtDataAdjusted);
-      console.log(this.totalVotesDataAdjusted);
+      this.districtVotes = districtVotes;
+      console.log(districtVotes);
 
       return { totalVotes, districtVotes }; // 在這裡返回這兩個對象
     }

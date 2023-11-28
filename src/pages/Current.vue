@@ -19,11 +19,8 @@ import D3Map from '@/components/D3Map.vue';
 const windowSizeStore = useWindowSizeStore();
 const isMobile = computed(() => windowSizeStore.width <= 768);
 
-// ===================== Pina 控制選票 Data 取得 ===================== //
 const regionStore = useRegionStore();
 
-// ===================== 地圖的popover資訊(在 “搜尋 dialog” 選擇完後顯示資訊) ===================== //
-// 地圖的popover資訊 、people-group 的資料
 const candidate = ref([
   {
     number: '1',
@@ -66,36 +63,63 @@ const popoverUP = ref(true);
 // 控制顯示 popover 的 class proportion-up
 const popoverProportionUp = ref(true);
 
-// 計算 popover 的總票數
-const popoverTotalVotes = computed(() => {
-  return candidate.value.reduce((sum, item) => sum + item.vote, 0);
-});
-
-// 計算 popover 的候選人百分比
-const popoverCandidatePercentages = computed(() => {
-  return candidate.value.map(item => ((item.vote / popoverTotalVotes.value) * 100).toFixed(2));
-});
-
 const winParty = ref('1');
 
-// ===================== drawer dialog ===================== //
-// 控制 “drawer” 跳窗
 const showDrawer = ref(false);
 
 // “drawer” 選擇框的選中值
 const areaAllSelected = ref(null);
 const areaCitySelected = ref(null);
 const areaTownSelected = ref(null);
-const areaVillageSelected = ref(null);
 
 // “drawer” 選擇框的值（原始值）
 const areaCityOptions = ref([]);
-// const areaVillageOptions = ref([]);
 const areaTownOptions = ref([]);
 
 // “drawer” 選擇框的選項（filter）
 const areaFilteredTowns = ref([]);
-const areafilteredVillages = ref([]);
+
+// 控制 ”搜尋“ 顯示
+const centerDialogVisible = ref(false);
+
+// ”搜尋“ 選擇框的選中值
+const selectedCityCode = ref(null);
+const selectedTownCode = ref(null);
+
+// ”搜尋“ 選擇框的選項(原始值)
+const cityOptions = ref([]);
+const townsOptions = ref([]);
+
+// ”搜尋“ 選擇框的選項（filter）
+const filteredTowns = ref([]);
+
+// 第二區塊 bar 的資料
+const candidateView = ref([
+  {
+    number: '1',
+    party: '貓貓進步黨',
+    img: catCircle,
+    color: '#F5A623',
+    vote: 5522119,
+    strokeWidth: 26.5
+  },
+  {
+    number: '2',
+    party: '旺星人守護黨',
+    img: dogCircle,
+    color: '#4A90E2',
+    vote: 5522119,
+    strokeWidth: 26.5
+  },
+  {
+    number: '3',
+    party: '鳥類保育黨',
+    img: birdCircle,
+    color: '#7ED321',
+    vote: 5522119,
+    strokeWidth: 26.5
+  }
+]);
 
 // 顯示 drawer 各縣市 data
 const testCountry = [
@@ -136,49 +160,16 @@ const testCountry = [
     party3: '21'
   }
 ];
-// ===================== search dialog ===================== //
-// 控制 ”搜尋“ 顯示
-const centerDialogVisible = ref(false);
 
-// ”搜尋“ 選擇框的選中值
-const selectedCityCode = ref(null);
-const selectedTownCode = ref(null);
-const selectedTownNAME = ref(null);
+// 計算 popover 的總票數
+const popoverTotalVotes = computed(() => {
+  return candidate.value.reduce((sum, item) => sum + item.vote, 0);
+});
 
-// ”搜尋“ 選擇框的選項(原始值)
-const cityOptions = ref([]);
-const townsOptions = ref([]);
-
-// ”搜尋“ 選擇框的選項（filter）
-const filteredTowns = ref([]);
-
-// 第二區塊 bar 的資料
-const candidateView = ref([
-  {
-    number: '1',
-    party: '貓貓進步黨',
-    img: catCircle,
-    color: '#F5A623',
-    vote: 5522119,
-    strokeWidth: 26.5
-  },
-  {
-    number: '2',
-    party: '旺星人守護黨',
-    img: dogCircle,
-    color: '#4A90E2',
-    vote: 5522119,
-    strokeWidth: 26.5
-  },
-  {
-    number: '3',
-    party: '鳥類保育黨',
-    img: birdCircle,
-    color: '#7ED321',
-    vote: 5522119,
-    strokeWidth: 26.5
-  }
-]);
+// 計算 popover 的候選人百分比
+const popoverCandidatePercentages = computed(() => {
+  return candidate.value.map(item => ((item.vote / popoverTotalVotes.value) * 100).toFixed(2));
+});
 
 // 計算總票數
 const totalVotes = computed(() => {
@@ -194,29 +185,31 @@ const candidatePercentages = computed(() => {
 });
 
 // 更新候選人總票數和各區域票數
-function _updateCandidatesVotes(candidates, totalVotes, districtVotes) {
+function _updateCandidatesVotes(candidates = [], totalVotes = {}, districtVotes = {}) {
+  // 更新候選人總票數
   candidates.forEach((candidate, index) => {
     // 確保 totalVotes 存在且包含所需的候選人票數
     if (totalVotes && totalVotes[`candidate${index + 1}`]) {
       candidate.vote = totalVotes[`candidate${index + 1}`];
     }
-    
-    // 根據 regionName 從 districtVotes 中獲取對應的票數
-    const districtVote = districtVotes[regionStore.regionName];
-    if (districtVote) {
-      candidate.districtVote = districtVote[`candidate${index + 1}`];
-    }
   });
-
-  // 如果 candidateView 是一個 ref，則需要這樣訪問和更新它的值
-  candidateView.value.forEach((viewItem, index) => {
+  
+  // 更新各區域票數
+  candidates.forEach((viewItem, index) => {
     const districtVote = districtVotes[regionStore.regionName];
-    if (districtVote) {
+    
+    if (districtVote && districtVote[`candidate${index + 1}`]) {
       viewItem.vote = districtVote[`candidate${index + 1}`];
     }
   });
 }
 
+/**
+ * 預設傳入 regionCode 為 'L'，即全國
+ * 依據傳入的 regionValue 取得區域資料
+ * 並更新 regionData 和 candidateView
+ * @param {String} regionValue 
+ */
 const handleRegionChange = async (regionValue = 'L') => {
   const letterPart = regionValue.slice(0, 1);
   const regionCode = regionStore.regionMap[letterPart];
@@ -227,32 +220,44 @@ const handleRegionChange = async (regionValue = 'L') => {
   }
 
   try {
-    const allData = await regionStore.fetchRegionData(regionCode);
-    if (!allData) {
+    const regionData = await regionStore.fetchRegionData(regionCode);
+    regionStore.regionData = regionData;
+    // regionData = data; // 賦值給 regionData
+    if (!regionData) {
       console.error('No data returned for region:', regionCode);
       return;
     }
+    
+    const { totalVotes } = regionStore.processVoteData(regionData);
+    
+    if (totalVotes === null) {
+      console.error('Invalid vote data:', totalVotes);
+      return;
+    }
 
-    const { totalVotes, districtVotes } = regionStore.processVoteData(allData);
-    console.log(totalVotes, districtVotes);
-    _updateCandidatesVotes(candidate.value, totalVotes, districtVotes);
-    _updateCandidatesVotes(candidateView.value, totalVotes, districtVotes);
+    // 顯示總票數
+    _updateCandidatesVotes(candidate.value, totalVotes);
+    _updateCandidatesVotes(candidateView.value, totalVotes);
+    
+    
   } catch (error) {
     console.error('Error handling region change:', error);
   }
 };
 
-// 選擇縣市時，過濾出該縣市的鄉鎮市區
+
+// 選擇縣市時，過濾出該縣市的鄉鎮市區 選項（用於城鎮區的select）
 const onCityChange = ID => {
   filteredTowns.value = townsOptions.value.filter(item => item.ID.slice(0, 1) === ID);
   selectedTownCode.value = null;
 };
 
-
-// 選擇select，更新 store 的 regionName
-const searchEventHandler = regionValue => {
-  handleRegionChange(regionValue);
+// drawer 中的 ”搜尋“ 選擇框的選中值
+const onAreaCityChange = ID => {
+  areaFilteredTowns.value = areaTownOptions.value.filter(item => item.ID.slice(0, 1) === ID);
+  areaTownSelected.value = null;
 };
+
 
 /**
  * 監聽選擇框的選中值，並更新 store 的 regionName
@@ -260,40 +265,47 @@ const searchEventHandler = regionValue => {
  */
 // 觀察選擇框的選中值，並更新 store 的 regionName
 watch(selectedCityCode, async(newVal, _) => {
-  console.log(newVal);
   if (newVal) {
+    // 依據選中的縣市，更新 store 的 originalRegionData
     await handleRegionChange(newVal);
+
     const selectedCity = cityOptions.value.find(item => item.ID.slice(0, 1) === newVal);
+    
     if (selectedCity) {
-      regionStore.regionName = selectedCity.NAME; // 更新 store 的 regionName
-      console.log(regionStore.regionName); // 選中的 縣市名稱 會用於 PINIA內部的資料查詢
+      regionStore.regionName = selectedCity.NAME; // 更新 store 的 regionName，選中的 縣市名稱 會用於 PINIA內部的資料查詢
     }
+    const { totalVotes } = regionStore.processVoteData(regionStore.regionData);
+    
+    if (totalVotes) {
+      // 將找到的資料更新到 Candidate
+      _updateCandidatesVotes(candidate.value, totalVotes);
+      _updateCandidatesVotes(candidateView.value, totalVotes);
+    }
+
   }
 });
 
-// // 當選擇鄉鎮區時，使用 Name 查找對應資料
+// 當選擇鄉鎮區時，使用 Name 查找對應資料
 watch(selectedTownCode, (newVal) => {
-  const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 3) === newVal);
+  if (newVal) {
+    console.log(newVal);
+    const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 3) === newVal);
+    
+    if (selectedTown) {
+      console.log(selectedTown);
+      regionStore.regionName = selectedTown.NAME;
+    }
+    console.log(regionStore.regionData);
+    // FIXME: 這裡的 regionData 會是 undefined
+    const { districtVotes } = regionStore.processVoteData(regionStore.regionData);
 
-  if (selectedTown) {
-    selectedTownNAME.value = selectedTown.NAME;
-  }
-
-  if (newVal && selectedTownNAME.value) {
-    const districtData = regionStore.districtDataAdjusted[selectedTownNAME.value];
-
-    console.log(districtData);
-
-    const totalVotes = regionStore.totalVotesDataAdjusted;
-    selectedTownNAME.value = selectedTown.NAME
-
-    if (districtData && totalVotes) {
+    if (districtVotes) {
+      console.log(districtVotes);
       // 將找到的資料更新到 Candidate
-      _updateCandidatesVotes(candidate.value, totalVotes, districtData);
-      _updateCandidatesVotes(candidateView.value, totalVotes, districtData);
+      _updateCandidatesVotes(candidate.value, districtVotes);
+      _updateCandidatesVotes(candidateView.value, districtVotes);
     }
   }
-  
   // 關閉跳窗
   centerDialogVisible.value = false;
   
@@ -316,6 +328,16 @@ const COUNTY_FETCH = async () => {
         NAME: element.properties.COUNTYNAME
       };
     });
+    
+    // Drawer 中的 select 選項
+    areaCityOptions.value = jsonData.features.map(element => {
+      return {
+        ID: element.properties.COUNTYID,
+        CODE: element.properties.COUNTYCODE,
+        NAME: element.properties.COUNTYNAME
+      };
+    });
+    
   } catch (error) {
     console.error('失敗:', error);
   }
@@ -334,24 +356,15 @@ const TOWN_FETCH = async () => {
         NAME: element.properties.TOWNNAME
       };
     });
-  } catch (error) {
-    console.error('失敗:', error);
-  }
-};
 
-// 取得 村里 選項
-const VILLAGE_FETCH = async () => {
-  try {
-    const response = await fetch('/map/VILLAGE_NLSC_121_1120928.json');
-    const jsonData = await response.json();
-    villageOptions.value = jsonData.features.map(element => {
+    // Drawer 中的 select 選項
+    areaFilteredTowns.value = jsonData.features.map(element => {
       return {
-        ID: element.properties.VILLAGECODE,
-        CODE: element.properties.VILLAGECODE,
-        NAME: element.properties.VILLAGENAME
+        ID: element.properties.COUNTYID,
+        CODE: element.properties.COUNTYCODE,
+        NAME: element.properties.COUNTYNAME
       };
     });
-    console.log(villageOptions.value);
   } catch (error) {
     console.error('失敗:', error);
   }
@@ -371,7 +384,7 @@ onMounted(async () => {
   // 取得 鄉鎮市區 坐標選項
   await TOWN_FETCH();
 
-  await handleRegionChange('L'); // 預設全選
+  await handleRegionChange('L'); // 預設全國資料
 });
 
 // TODO: 跟d3互傳的是這個 看在把searchResults的值改成這個之類的 這裡我測試先預設了 你可以刪掉 ㄏ
@@ -437,7 +450,7 @@ function closeDrawer() {
             <el-select
               v-model="selectedCityCode"
               :placeholder="$t('current.selectCityPlaceholder')"
-              @change="onCityChange(selectedCityCode), searchEventHandler(selectedCityCode)"
+              @change="onCityChange(selectedCityCode)"
             >
               <el-option
                 v-for="item in cityOptions"
@@ -451,7 +464,6 @@ function closeDrawer() {
             <el-select
               v-model="selectedTownCode"
               :placeholder="$t('current.selectNeighborhoodPlaceholder')"
-              @change="searchEventHandler(selectedTownCode)"
             >
               <el-option
                 v-for="item in filteredTowns"
@@ -628,7 +640,7 @@ function closeDrawer() {
           <div class="area-wrapper">
             <div class="search">
               <el-button v-model="areaAllSelected" class="all-btn">全臺</el-button>
-              <el-select v-model="areaCitySelected" class="city-select" placeholder="縣市">
+              <el-select v-model="areaCitySelected" class="city-select" placeholder="縣市" @change="onAreaCityChange">
                 <el-option
                   v-for="item in areaCityOptions"
                   :key="item.ID"
@@ -644,30 +656,7 @@ function closeDrawer() {
                   :value="item.CODE"
                 />
               </el-select>
-              <el-select v-model="areaVillageSelected" class="unit-select" placeholder="選擇里">
-                <el-option
-                  v-for="item in areafilteredVillages"
-                  :key="item.ID"
-                  :label="item.NAME"
-                  :value="item.CODE"
-                />
-              </el-select>
             </div>
-            <!-- <div class="overview-content">
-              <div class="person">
-                <span class="flag">1</span>
-                <span class="text">喵喵</span>
-              </div>
-
-              <div class="tag">
-                <div class="text"></div>
-              </div>
-
-              <div class="">
-                <span class="vote"></span>
-                <span class="bar"></span>
-              </div>
-            </div> -->
 
             <div class="area area-left">
               <div class="left-title">
@@ -729,6 +718,7 @@ function closeDrawer() {
     </div>
   </div>
 </template>
+
 <style lang="scss" scoped>
 .current-wrapper {
   background-color: $blue-bg;
