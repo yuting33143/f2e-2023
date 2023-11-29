@@ -109,6 +109,7 @@ const candidatePercentages = computed(() => {
   return candidate.value.map(item => ((item.vote / totalVotes.value) * 100).toFixed(2));
 });
 
+
 const winParty = ref('1');
 
 const testCountry = [
@@ -142,11 +143,8 @@ const popoverUP = ref(true);
 
 const popoverProportionUp = ref(true);
 
-// TODO: 跟d3互傳的是這個 看在把searchResults的值改成這個之類的 這裡我測試先預設了 你可以刪掉 ㄏ
-const SelectArea = ref([
-  { id: 'J', name: '新竹縣' },
-  { id: 'J14', name: '尖石鄉' }
-]);
+// D3Map
+const SelectArea = ref([]);
 
 const handleUpdateSelectArea = updatedArea => {
   SelectArea.value = updatedArea;
@@ -154,6 +152,8 @@ const handleUpdateSelectArea = updatedArea => {
 };
 
 // ==================== 以下是 Eric ==================== // 
+const invalidVotes = ref(0);
+const votingRate = ref(0);
 
 // “drawer” 選擇框的選中值
 const areaAllSelected = ref(null);
@@ -287,6 +287,7 @@ const handleRegionChange = async (regionValue = 'L') => {
     }
     // 顯示總票數
     _updateCandidatesVotes(candidate.value, totalVotes);
+
     // _updateCandidatesVotes(candidateView.value, totalVotes);
 
     _updateDrawerVotes()
@@ -437,6 +438,19 @@ const TOWN_FETCH = async () => {
   }
 };
 
+// 投票率
+const voteRate = computed(() => {
+  const rate = validVotes.value / (validVotes.value + invalidVotes.value);
+  return (rate * 100);
+});
+
+const invalidVote = computed(() => {
+  return regionStore.totalVotes.invalidVotes;
+});
+const validVotes = computed(() => {
+  return regionStore.totalVotes.validVotes;
+});
+
 // hook mounted
 onMounted(async () => {
   // 取得 市/縣 坐標選項
@@ -446,6 +460,8 @@ onMounted(async () => {
   await TOWN_FETCH();
 
   await handleRegionChange('L'); 
+
+  
 });
 
 
@@ -576,7 +592,7 @@ onMounted(async () => {
         <div class="info-area vote-percent">
           <div class="vote-text">
             <div class="vote-title">投票率</div>
-            <div class="percent-info">69.4%</div>
+            <div class="percent-info">{{ voteRate }}%</div>
             <div class="vote-note">
               <div class="icon">
                 <img src="@/assets/images/icon/up.png" />
@@ -592,7 +608,7 @@ onMounted(async () => {
           <!-- 總票數 -->
           <div class="vote-text">
             <div class="total-title">總票數</div>
-            <div class="total-vote">14040722票</div>
+            <div class="total-vote">{{totalVotes}}票</div>
             <div class="total-note">
               <div class="icon">
                 <img src="@/assets/images/icon/up.png" />
@@ -611,7 +627,7 @@ onMounted(async () => {
                 <img src="@/assets/images/icon/vote.png" />
                 <div class="word">有效票</div>
               </div>
-              <div class="down">13,870,377票</div>
+              <div class="down">{{ validVotes }}票</div>
             </div>
             <!-- 無效 -->
             <div class="list-title">
@@ -619,7 +635,7 @@ onMounted(async () => {
                 <img src="@/assets/images/icon/invalid-vote.png" />
                 <div class="word">無效票</div>
               </div>
-              <div class="down">234,666票</div>
+              <div class="down">{{ invalidVote }}票</div>
             </div>
           </div>
         </div>
