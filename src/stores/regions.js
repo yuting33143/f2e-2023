@@ -1,4 +1,5 @@
 // store/regions.js
+
 import { defineStore } from 'pinia';
 // 取得選票資料
 export const useRegionStore = defineStore('region', {
@@ -47,9 +48,8 @@ export const useRegionStore = defineStore('region', {
       console.log(jsonName);
       let url =
         jsonName === 'ALL'
-          ? `/${this.year}_voit/ALL.json`
-          : `/${this.year}_voit/city/${jsonName}.json`;
-
+          ? `${import.meta.env.BASE_URL}${this.year}_voit/ALL.json`
+          : `${import.meta.env.BASE_URL}${this.year}_voit/city/${jsonName}.json`;
       try {
         const response = await fetch(url);
         if (!response.ok) {

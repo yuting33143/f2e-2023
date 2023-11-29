@@ -380,7 +380,7 @@ watch(areaTownSelected, async(newVal) => {
 // 取得 市/縣 選項
 const COUNTY_FETCH = async () => {
   try {
-    const response = await fetch('/map/COUNTY_MOI_1090820.json');
+    const response = await fetch(`${import.meta.env.BASE_URL}map/COUNTY_MOI_1090820.json`);
     const jsonData = await response.json();
 
     console.log(response);
@@ -412,7 +412,7 @@ const COUNTY_FETCH = async () => {
 // 取得 鄉鎮市區 選項
 const TOWN_FETCH = async () => {
   try {
-    const response = await fetch('/map/TOWN_MOI_1120825.json');
+    const response = await fetch(`${import.meta.env.BASE_URL}map/TOWN_MOI_1120825.json`);
     const jsonData = await response.json();
 
     
