@@ -148,7 +148,6 @@ export const useRegionStore = defineStore('region', {
 
       const districtVotes = this.getDistrictVotes(validData);
       this.districtVotes = districtVotes;
-      console.log(districtVotes);
 
       return { totalVotes, districtVotes }; // 在這裡返回這兩個對象
     }
