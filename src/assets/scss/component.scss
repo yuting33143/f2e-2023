@@ -1,0 +1,64 @@
+.el-button:not(#fake-id) {
+  color: $white;
+  border-radius: 16px;
+  @include text4;
+  background-color: $black;
+  border: none;
+  height: 48px;
+
+  &:hover {
+    background-color: $primary;
+  }
+}
+
+// tip: select的width在el-input改
+.el-select:not(#fake-id) {
+  .el-input {
+    height: 48px;
+    .el-input__wrapper {
+      border-radius: 16px;
+      padding: 1px 16px;
+
+      .el-input__inner {
+        @include text4;
+      }
+    }
+    &.is-focus {
+      .el-input__wrapper {
+        box-shadow: 0 0 0 1px $secondary inset !important;
+      }
+    }
+  }
+  .el-input__wrapper {
+    &.is-focus {
+      box-shadow: 0 0 0 1px $secondary inset !important;
+    }
+  }
+}
+
+.el-popper__arrow {
+  display: none;
+}
+.el-popper:not(#fake-id) {
+  border-radius: 10px;
+  .el-select-dropdown__item.selected {
+    color: $black;
+    position: relative;
+    &::before {
+      content: '';
+      position: absolute;
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      background-position: center;
+      background-repeat: no-repeat;
+      top: 7px;
+      left: 16px;
+      background-image: url('../images/icon/check.png');
+    }
+  }
+  .el-select-dropdown__item {
+    padding-left: 38px;
+    color: $gray3;
+  }
+}
