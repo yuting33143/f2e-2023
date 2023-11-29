@@ -7,7 +7,8 @@ export const useRegionStore = defineStore('region', {
     regionData: {}, // 全部資料
     totalVotes: {}, // 總票數
     districtVotes: {}, // 各地區票數
-    regionName: '', // 選區名稱
+    cityRegionName: '', // 選區名稱
+    townRegionName: '', // 選區名稱
     Code: '', // 選區代碼
     year: '2020', // 年份
 
@@ -75,20 +76,21 @@ export const useRegionStore = defineStore('region', {
         item =>
           item &&
           item['第15任總統副總統選舉候選人得票數一覽表'] !== '行政區別' &&
-          item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`] !==
+          item[`第15任總統副總統選舉候選人在${this.cityRegionName}各鄉(鎮、市、區)得票數一覽表`] !==
             '行政區別'
       );
     },
 
     // 取得總票數
     getTotalVotes(validData) {
-      console.log(this.regionName);
-      if (this.regionName || this.Code === 'ALL') {
+      console.log(this.cityRegionName);
+      if (this.cityRegionName || this.Code === 'ALL') {
         const totalVoteEntry = validData.find(
           item =>
             item['第15任總統副總統選舉候選人得票數一覽表'] === '總　計' ||
-            item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`] ===
-              '總　計'
+            item[
+              `第15任總統副總統選舉候選人在${this.cityRegionName}各鄉(鎮、市、區)得票數一覽表`
+            ] === '總　計'
         );
 
         return totalVoteEntry
@@ -106,7 +108,7 @@ export const useRegionStore = defineStore('region', {
     },
     getDistrictVotes(validData) {
       const districtVotes = {};
-
+      console.log(validData);
       if (validData.length === 0) {
         return {};
       }
@@ -114,7 +116,7 @@ export const useRegionStore = defineStore('region', {
       validData.forEach(item => {
         let districtNameField =
           item['第15任總統副總統選舉候選人得票數一覽表'] ||
-          item[`第15任總統副總統選舉候選人在${this.regionName}各鄉(鎮、市、區)得票數一覽表`];
+          item[`第15任總統副總統選舉候選人在${this.cityRegionName}各鄉(鎮、市、區)得票數一覽表`];
 
         if (!districtNameField) {
           return;
@@ -144,10 +146,11 @@ export const useRegionStore = defineStore('region', {
 
       const totalVotes = this.getTotalVotes(validData);
       this.totalVotes = totalVotes;
-      console.log(totalVotes);
+      console.log(this.totalVotes);
 
       const districtVotes = this.getDistrictVotes(validData);
       this.districtVotes = districtVotes;
+      console.log(this.districtVotes);
 
       return { totalVotes, districtVotes }; // 在這裡返回這兩個對象
     }
