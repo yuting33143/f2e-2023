@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import ScaleBar from '@/components/scaleBar.vue';
 import catImage from '@/assets/images/cat-main.png';
 import dogImage from '@/assets/images/dog-main.png';
@@ -11,12 +11,13 @@ import catBg from '@/assets/images/bg-orange.png';
 import dogBg from '@/assets/images/bg-blue.png';
 import birdBg from '@/assets/images/bg-green.png';
 import { useWindowSizeStore } from '@/stores/windowSize.js';
+import { useRegionStore } from '@/stores/regions.js';
 import D3Map from '@/components/D3Map.vue';
 
 const windowSizeStore = useWindowSizeStore();
 
 const isMobile = computed(() => windowSizeStore.width <= 768);
-
+const regionStore = useRegionStore();
 const yearTab = [
   {
     period: '15',
@@ -112,125 +113,23 @@ const winParty = ref('1');
 
 const testCountry = [
   {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
+    city: '臺北市',
+    party1: '',
+    party2: '',
+    party3: ''
   },
   {
     city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
+    party1: '',
+    party2: '',
+    party3: ''
   },
   {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
+    city: '臺中市',
+    party1: '',
+    party2: '',
+    party3: ''
   },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  },
-  {
-    city: '台北市',
-    party1: '42',
-    party2: '54',
-    party3: '14'
-  },
-  {
-    city: '新北市',
-    party1: '37',
-    party2: '42',
-    party3: '21'
-  }
 ];
 
 const searchResults = {
@@ -253,6 +152,303 @@ const handleUpdateSelectArea = updatedArea => {
   SelectArea.value = updatedArea;
   // console.log('傳出來的', SelectArea.value);
 };
+
+// ==================== 以下是 Eric ==================== // 
+
+// “drawer” 選擇框的選中值
+const areaAllSelected = ref(null);
+const areaCitySelected = ref(null);
+const areaTownSelected = ref(null);
+
+// “drawer” 選擇框的值（原始值）
+const areaCityOptions = ref([]);
+const areaTownOptions = ref([]);
+
+// “drawer” 選擇框的選項（filter）
+const areaFilteredTowns = ref([]);
+
+// ”搜尋“ 選擇框的選中值
+const selectedCityCode = ref(null);
+const selectedTownCode = ref(null);
+
+// ”搜尋“ 選擇框的選項(原始值)
+const cityOptions = ref([]);
+const townsOptions = ref([]);
+
+// ”搜尋“ 選擇框的選項（filter）
+const filteredTowns = ref([]);
+
+
+
+
+// 更新候選人總票數和各區域票數
+function _updateCandidatesVotes(candidates = [], totalVotes = {}, districtVotes = {}) {
+  
+  // 更新候選人總票數
+  candidates.forEach((candidate, index) => {
+    // 確保 totalVotes 存在且包含所需的候選人票數
+    if (totalVotes && totalVotes[`candidate${index + 1}`]) {
+      candidate.vote = totalVotes[`candidate${index + 1}`];
+    }
+  });
+
+  // 更新各區域票數
+  candidates.forEach((viewItem, index) => {
+    if (districtVotes && districtVotes[`candidate${index + 1}`]) {
+      viewItem.vote = districtVotes[`candidate${index + 1}`];
+    }
+  });
+}
+
+// OK
+function _updateDrawerVotes() {
+  console.log(regionStore.districtVotes);
+  // 重構 testCountry 以包含 districtVotes 中的所有城市
+  testCountry.value = Object.keys(regionStore.districtVotes).map(cityName => {
+    const cityVotes = regionStore.districtVotes[cityName];
+    return {
+      city: cityName,
+      party1: cityVotes.candidate1 ?? '', // 如果沒有數據為空字串
+      party2: cityVotes.candidate2 ?? '', // 如果沒有數據為空字串
+      party3: cityVotes.candidate3 ?? ''  // 如果沒有數據為空字串
+    };
+  }).filter(cityItem => cityItem.city !== '鄉(鎮、市、區)別');  // 排除特定的城市
+  console.log(testCountry.value);
+};
+
+const onAreaCityChange = async(id) => {
+  await handleRegionChange(id)
+  areaFilteredTowns.value = areaTownOptions.value.filter(item => item.ID.slice(0, 1) === id);
+  areaTownSelected.value = null;
+  console.log(testCountry.value);
+};
+
+const onAreaTownChange = id => {
+  _updateDrawerVotes() // 重設抽的候選人票數
+  const selectedTown = areaTownOptions.value.find(item => item.ID.slice(0, 3) === id);
+  const townRegionName = selectedTown.NAME;
+  console.log(townRegionName);
+  regionStore.townRegionName = townRegionName;
+  console.log(testCountry.value);
+  const regionData = testCountry.value.find(cityItem => cityItem.city === townRegionName);
+
+  console.log(regionData);
+  if (regionData) {
+    console.log('找到的區域數據:', regionData);
+    
+    testCountry.value = [regionData]
+    
+  } else {
+    console.log('未找到匹配的區域數據');
+  }
+
+  // const regionData = districtVotes[townRegionName];
+  // console.log(regionData);
+
+  _updateCandidatesVotes(candidate.value, null, regionData);
+  // _updateCandidatesVotes(candidateView.value, null, regionData);
+
+  const SelectAreaName = areaFilteredTowns.value.filter(item => item.ID === id);
+  SelectArea.value = [...SelectArea.value.slice(0, 1), { id, name: SelectAreaName[0].NAME }];
+  
+  // 清空選中的縣市選項
+  selectedCityCode.value = null;
+  selectedTownCode.value = null;
+};
+
+/**
+ * 預設傳入 regionCode 為 'L'，即全國
+ * 依據傳入的 regionValue 取得區域資料
+ * 並更新 regionData 和 candidateView
+ * @param {String} regionValue
+ */
+const handleRegionChange = async (regionValue = 'L') => {
+  const letterPart = regionValue.slice(0, 1);
+  const regionCode = regionStore.regionMap[letterPart];
+
+  if (!regionCode) {
+    console.error('Invalid region code:', letterPart);
+    return;
+  }
+
+  try {
+    const regionData = await regionStore.fetchRegionData(regionCode);
+    regionStore.regionData = regionData;
+
+    if (!regionData) {
+      console.error('No data returned for region:', regionCode);
+      return;
+    }
+
+    const { totalVotes } = regionStore.processVoteData(regionData);
+    if (totalVotes === null) {
+      console.error('Invalid vote data:', totalVotes);
+      return;
+    }
+    // 顯示總票數
+    _updateCandidatesVotes(candidate.value, totalVotes);
+    // _updateCandidatesVotes(candidateView.value, totalVotes);
+
+    _updateDrawerVotes()
+    
+  } catch (error) {
+    console.error('Error handling region change:', error);
+  }
+};
+
+// 選擇縣市時，過濾出該縣市的鄉鎮市區 選項（用於城鎮區的select）
+// const onCityChange = async (id) => {
+  
+//   const SelectAreaName = cityOptions.value.filter(item => item.ID === id);
+//   SelectArea.value = [
+//     {
+//       id,
+//       name: SelectAreaName[0].NAME
+//     }
+//   ];
+//   filteredTowns.value = townsOptions.value.filter(item => item.ID.slice(0, 1) === id);
+//   selectedTownCode.value = null;
+// };
+
+
+watch(areaCitySelected, async(newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    // 依據選中的縣市，更新 store 的 originalRegionData
+    // await handleRegionChange(newVal);
+
+    const selectedCity = areaCityOptions.value.find(item => item.ID.slice(0, 1) === newVal);
+    
+    if (selectedCity) {
+      regionStore.cityRegionName = selectedCity.NAME; // 更新 store 的 regionName，選中的 縣市名稱 會用於 PINIA內部的資料查詢
+    }
+  }
+});
+
+watch(areaTownSelected, async(newVal) => {
+  if (newVal) {
+    const selectedTown = areaTownOptions.value.find(item => item.ID.slice(0, 3) === newVal);
+    
+    if (selectedTown) {
+      regionStore.townRegionName = selectedTown.NAME; // 更新 store 的 regionName，選中的 縣市名稱 會用於 PINIA內部的資料查詢
+    }
+  }
+});
+
+
+/**
+ * 監聽選擇框的選中值，並更新 store 的 regionName
+ * 選中的縣市名稱會用於 PINIA 內部的資料查詢，並 return 該選中的鄉鎮區域
+ */
+// 觀察選擇框的選中值，並更新 store 的 regionName
+// watch(selectedCityCode, async(newVal) => {
+//   console.log(newVal);
+//   if (newVal) {
+//     // 依據選中的縣市，更新 store 的 originalRegionData
+//     await handleRegionChange(newVal);
+
+//     const selectedCity = cityOptions.value.find(item => item.ID.slice(0, 1) === newVal);
+
+//     if (selectedCity) {
+//       regionStore.cityRegionName = selectedCity.NAME; // 更新 store 的 regionName，選中的 縣市名稱 會用於 PINIA內部的資料查詢
+//     }
+//     const { totalVotes } = regionStore.processVoteData(regionStore.regionData);
+
+//     if (totalVotes) {
+//       // 將找到的資料更新到 Candidate
+//       _updateCandidatesVotes(candidate.value, totalVotes);
+//       _updateCandidatesVotes(candidateView.value, totalVotes);
+//     }
+//   }
+// });
+
+// 當選擇鄉鎮區時，使用 Name 查找對應資料
+// watch(selectedTownCode, newVal => {
+//   if (newVal) {
+//     console.log(newVal);
+//     const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 3) === newVal);
+
+//     if (selectedTown) {
+//       regionStore.townRegionName = selectedTown.NAME;
+//     }
+//     console.log(regionStore.townRegionName);
+//   }
+  
+// });
+
+
+// 取得 市/縣 選項
+const COUNTY_FETCH = async () => {
+  try {
+    const response = await fetch('/map/COUNTY_MOI_1090820.json');
+    const jsonData = await response.json();
+
+    console.log(response);
+    console.log(jsonData);  
+    console.log(jsonData.features[0].properties);
+    cityOptions.value = jsonData.features.map(element => {
+      return {
+        ID: element.properties.COUNTYID,
+        CODE: element.properties.COUNTYCODE,
+        NAME: element.properties.COUNTYNAME
+      };
+    });
+    console.log(cityOptions.value);
+    // Drawer 中的 select 選項
+    areaCityOptions.value = jsonData.features.map(element => {
+      return {
+        ID: element.properties.COUNTYID,
+        CODE: element.properties.COUNTYCODE,
+        NAME: element.properties.COUNTYNAME
+      };
+    });
+
+    console.log(areaCityOptions.value);
+  } catch (error) {
+    console.error('失敗:', error);
+  }
+};
+
+// 取得 鄉鎮市區 選項
+const TOWN_FETCH = async () => {
+  try {
+    const response = await fetch('/map/TOWN_MOI_1120825.json');
+    const jsonData = await response.json();
+
+    
+
+    townsOptions.value = jsonData.features.map(element => {
+      return {
+        ID: element.properties.TOWNID,
+        CODE: element.properties.TOWNCODE,
+        NAME: element.properties.TOWNNAME
+      };
+    });
+
+    // Drawer 中的 select 選項
+    areaTownOptions.value = jsonData.features.map(element => {
+      return {
+        ID: element.properties.TOWNID,
+        CODE: element.properties.TOWNCODE,
+        NAME: element.properties.TOWNNAME
+      };
+    });
+  } catch (error) {
+    console.error('失敗:', error);
+  }
+};
+
+// hook mounted
+onMounted(async () => {
+  // 取得 市/縣 坐標選項
+  await COUNTY_FETCH();
+
+  // 取得 鄉鎮市區 坐標選項
+  await TOWN_FETCH();
+
+  await handleRegionChange('L'); 
+});
+
+
 </script>
 
 <template>
@@ -433,10 +629,23 @@ const handleUpdateSelectArea = updatedArea => {
         <!-- 左邊全區scalebar(各區票數) -->
         <div class="area area-left">
           <div class="search" v-if="!isMobile">
-            <el-button class="all-btn">全臺</el-button>
-            <el-select class="city-select" placeholder="縣市"></el-select>
-            <el-select class="area-select" placeholder="選擇鄉鎮區"></el-select>
-            <el-select class="unit-select" placeholder="選擇里"></el-select>
+            <el-button v-model="areaAllSelected" class="all-btn" @click="handleRegionChange('L')">全臺</el-button>
+            <el-select v-model="areaCitySelected" class="city-select" placeholder="縣市" @change="onAreaCityChange">
+              <el-option
+                v-for="item in areaCityOptions"
+                :key="item.ID"
+                :label="item.NAME"
+                :value="item.ID"
+              />
+            </el-select>
+            <el-select v-model="areaTownSelected" class="area-select" placeholder="選擇鄉鎮區" @change="onAreaTownChange">
+              <el-option
+                v-for="item in areaFilteredTowns"
+                :key="item.ID"
+                :label="item.NAME"
+                :value="item.ID"
+              />
+            </el-select>
           </div>
           <div class="left-title">
             <div class="town">鄉鎮區</div>

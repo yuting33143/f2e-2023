@@ -191,9 +191,9 @@ function _updateDrawerVotes() {
     console.log(cityVotes);
     return {
       city: cityName,
-      party1: cityVotes.candidate1 ?? '', // 如果没有数据则默认为空字符串
-      party2: cityVotes.candidate2 ?? '', // 如果没有数据则默认为空字符串
-      party3: cityVotes.candidate3 ?? ''  // 如果没有数据则默认为空字符串
+      party1: cityVotes.candidate1 ?? '', // 如果沒有數據為空字串
+      party2: cityVotes.candidate2 ?? '', // 如果沒有數據為空字串
+      party3: cityVotes.candidate3 ?? ''  // 如果沒有數據為空字串
     };
   }).filter(cityItem => cityItem.city !== '鄉(鎮、市、區)別');  // 排除特定的城市
 
@@ -204,7 +204,6 @@ function _updateDrawerVotes() {
 // 更新候選人總票數和各區域票數
 function _updateCandidatesVotes(candidates = [], totalVotes = {}, districtVotes = {}) {
   
-  console.log(totalVotes);
   // 更新候選人總票數
   candidates.forEach((candidate, index) => {
     // 確保 totalVotes 存在且包含所需的候選人票數
@@ -213,7 +212,6 @@ function _updateCandidatesVotes(candidates = [], totalVotes = {}, districtVotes 
     }
   });
 
-  console.log(districtVotes);
   // 更新各區域票數
   candidates.forEach((viewItem, index) => {
     if (districtVotes && districtVotes[`candidate${index + 1}`]) {
@@ -229,7 +227,6 @@ function _updateCandidatesVotes(candidates = [], totalVotes = {}, districtVotes 
  * @param {String} regionValue
  */
 const handleRegionChange = async (regionValue = 'L') => {
-  console.log(regionValue);
   const letterPart = regionValue.slice(0, 1);
   const regionCode = regionStore.regionMap[letterPart];
 
@@ -282,13 +279,10 @@ const onTownChange = async(id) => {
   const townRegionName = selectedTown.NAME;
   regionStore.townRegionName = townRegionName;
 
-  console.log(id);
   const districtVotes = regionStore.districtVotes
-  console.log(townRegionName);
-  console.log(districtVotes);
 
   const regionData = districtVotes[townRegionName];
-  console.log(regionData);
+
   _updateCandidatesVotes(candidate.value, null, regionData);
   _updateCandidatesVotes(candidateView.value, null, regionData);
 
@@ -312,11 +306,37 @@ const onAreaCityChange = async(id) => {
 };
 
 const onAreaTownChange = id => {
-  // const SelectAreaItem = filteredTowns.value.filter(item => item.ID === id);
-  // SelectArea.value.push({
-  //   id,
-  //   name: SelectAreaItem[0].NAME
-  // });
+  _updateDrawerVotes() // 重設抽的候選人票數
+  const selectedTown = areaTownOptions.value.find(item => item.ID.slice(0, 3) === id);
+  const townRegionName = selectedTown.NAME;
+  regionStore.townRegionName = townRegionName;
+
+  const regionData = testCountry.value.find(cityItem => cityItem.city === townRegionName);
+
+  if (regionData) {
+    console.log('找到的區域數據:', regionData);
+    
+    testCountry.value = [regionData]
+    
+  } else {
+    console.log('未找到匹配的區域數據');
+  }
+
+  // const regionData = districtVotes[townRegionName];
+  // console.log(regionData);
+
+  _updateCandidatesVotes(candidate.value, null, regionData);
+  _updateCandidatesVotes(candidateView.value, null, regionData);
+
+  const SelectAreaName = areaFilteredTowns.value.filter(item => item.ID === id);
+  SelectArea.value = [...SelectArea.value.slice(0, 1), { id, name: SelectAreaName[0].NAME }];
+  
+  // 關閉跳窗
+  centerDialogVisible.value = false;
+
+  // 清空選中的縣市選項
+  selectedCityCode.value = null;
+  selectedTownCode.value = null;
 };
 
 watch(areaCitySelected, async(newVal, oldVal) => {
@@ -334,21 +354,11 @@ watch(areaCitySelected, async(newVal, oldVal) => {
 
 watch(areaTownSelected, async(newVal) => {
   if (newVal) {
-    const selectedCity = areaTownOptions.value.find(item => item.ID.slice(0, 3) === newVal);
+    const selectedTown = areaTownOptions.value.find(item => item.ID.slice(0, 3) === newVal);
     
-    if (selectedCity) {
-      regionStore.townRegionName = selectedCity.NAME; // 更新 store 的 regionName，選中的 縣市名稱 會用於 PINIA內部的資料查詢
+    if (selectedTown) {
+      regionStore.townRegionName = selectedTown.NAME; // 更新 store 的 regionName，選中的 縣市名稱 會用於 PINIA內部的資料查詢
     }
-    const { totalVotes } = regionStore.processVoteData(regionStore.regionData);
-    console.log(totalVotes);
-
-    // FIXME: 這裡的 totalVotes 會是 null，因為 regionStore.regionData 是空的
-    if (totalVotes) {
-      testCountry.value.forEach((item, index) => {
-        item[`party${index + 1}`] = totalVotes[`candidate${index + 1}`];
-      });
-    }
-
   }
 });
 
@@ -385,12 +395,7 @@ watch(selectedTownCode, newVal => {
     console.log(newVal);
     const selectedTown = townsOptions.value.find(item => item.ID.slice(0, 3) === newVal);
 
-
-    console.log(townsOptions.value);
-    console.log(selectedTown);
-
     if (selectedTown) {
-      console.log(selectedTown);
       regionStore.townRegionName = selectedTown.NAME;
     }
     console.log(regionStore.townRegionName);
@@ -709,7 +714,7 @@ onMounted(async () => {
           <!-- 左邊全區scalebar(各區票數) -->
           <div class="area-wrapper">
             <div class="search">
-              <el-button v-model="areaAllSelected" class="all-btn" @click="handleRegionChange('L', true)">全臺</el-button>
+              <el-button v-model="areaAllSelected" class="all-btn" @click="handleRegionChange('L')">全臺</el-button>
               <el-select v-model="areaCitySelected" class="city-select" placeholder="縣市" @change="onAreaCityChange">
                 <el-option
                   v-for="item in areaCityOptions"
